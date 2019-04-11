@@ -1,6 +1,6 @@
-import { chat, ChatMessage } from "../chat";
+import { ChatMessage } from "../chat";
 import {
-  localChatDriver,
+  localChat as chat,
   clearRooms,
   clearMessages,
   getMessages,
@@ -18,7 +18,8 @@ test("Creates a chat instance", () => {
     firstName: "Cristian",
     lastName: "Gabbanini"
   };
-  const myChat = chat(localChatDriver, user);
+
+  const myChat = chat(user);
 
   expect(myChat).toHaveProperty("disconnect");
   expect(myChat).toHaveProperty("sendMessage");
@@ -32,14 +33,14 @@ test("Users can enter room", () => {
     firstName: "Cristian",
     lastName: "Gabbanini"
   };
-  const myChat = chat(localChatDriver, user1);
+  const myChat = chat(user1);
 
   const user2 = {
     id: "123-42323",
     firstName: "Daniela",
     lastName: "Bulgarelli"
   };
-  const myChat2 = chat(localChatDriver, user2);
+  const myChat2 = chat(user2);
 
   const leaveRoom1 = myChat.enterRoom("123-456-abc");
   const leaveRoom2 = myChat2.enterRoom("123-456-abc");
@@ -59,7 +60,7 @@ test("The same user cannot enter a room twice", () => {
     firstName: "Cristian",
     lastName: "Gabbanini"
   };
-  const myChat = chat(localChatDriver, user1);
+  const myChat = chat(user1);
 
   myChat.enterRoom("123-456-abc");
   myChat.enterRoom("123-456-abc");
@@ -74,7 +75,7 @@ test("User can leave a room", () => {
     firstName: "Cristian",
     lastName: "Gabbanini"
   };
-  const myChat = chat(localChatDriver, user1);
+  const myChat = chat(user1);
 
   const leaveRoom1 = myChat.enterRoom("123-456-abc");
   leaveRoom1();
@@ -94,7 +95,7 @@ test("Entering a room triggers the enter-room event", () => {
     firstName: "Daniela",
     lastName: "Bulgarelli"
   };
-  const cristianChat = chat(localChatDriver, user1);
+  const cristianChat = chat(user1);
 
   const eventHandler = jest.fn((user, room) => {
     if (user.id === user1.id) {
@@ -106,7 +107,7 @@ test("Entering a room triggers the enter-room event", () => {
 
   cristianChat.onEnterRoom(eventHandler);
 
-  const danielaChat = chat(localChatDriver, user2);
+  const danielaChat = chat(user2);
   const leaveRoom1 = danielaChat.enterRoom("123-456-abc");
   expect(eventHandler.mock.calls.length).toBe(1);
 });
@@ -118,7 +119,7 @@ test("Leaving a room triggers the leave-room event", () => {
     lastName: "Gabbanini"
   };
 
-  const cristianChat = chat(localChatDriver, user1);
+  const cristianChat = chat(user1);
 
   const eventHandler = jest.fn((user, room) => {});
 
@@ -137,7 +138,7 @@ test("Disconnecting triggers the leave-room event", () => {
     lastName: "Gabbanini"
   };
 
-  const cristianChat = chat(localChatDriver, user1);
+  const cristianChat = chat(user1);
 
   const eventHandler = jest.fn((user, room) => {});
 
@@ -155,7 +156,7 @@ test("Users can send messages", () => {
     firstName: "Cristian",
     lastName: "Gabbanini"
   };
-  const myChat = chat(localChatDriver, user1);
+  const myChat = chat(user1);
   const roomId = "123-456-abc";
   const leaveRoom1 = myChat.enterRoom(roomId);
   const message: ChatMessage = {
@@ -183,8 +184,8 @@ test("Users can receive messages from others", async () => {
   };
   const roomId = "123-456-abc";
 
-  const cristianChat = chat(localChatDriver, user1);
-  const danielaChat = chat(localChatDriver, user2);
+  const cristianChat = chat(user1);
+  const danielaChat = chat(user2);
 
   cristianChat.enterRoom(roomId);
   danielaChat.enterRoom(roomId);

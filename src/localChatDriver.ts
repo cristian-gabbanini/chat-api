@@ -1,4 +1,4 @@
-import { User, Room, ChatEvent, ChatMessage } from "./chat";
+import { chat, User, Room, ChatEvent, ChatMessage } from "./chat";
 
 // --------------------------------------------------------------------------------------------
 // Demo usage
@@ -74,3 +74,5 @@ export function clearMessages() {
 export function getMessages(roomId: string) {
   return messages[roomId];
 }
+
+export const localChat = chat.bind(null, localChatDriver);
