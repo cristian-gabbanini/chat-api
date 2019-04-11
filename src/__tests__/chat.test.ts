@@ -130,3 +130,51 @@ test("Users can send messages", () => {
 
   expect(getMessages(roomId)).toHaveLength(2);
 });
+
+test("Users can receive messages from others", async () => {
+  const user1 = {
+    id: "123-32323",
+    firstName: "Cristian",
+    lastName: "Gabbanini"
+  };
+  const user2 = {
+    id: "444-32323",
+    firstName: "Daniela",
+    lastName: "Bulgarelli"
+  };
+  const roomId = "123-456-abc";
+
+  const cristianChat = chat(localChatDriver, user1);
+  const danielaChat = chat(localChatDriver, user2);
+
+  cristianChat.enterRoom(roomId);
+  danielaChat.enterRoom(roomId);
+
+  const message: ChatMessage = {
+    type: "message",
+    content: "Hello world",
+    user: user2
+  };
+  const message2: ChatMessage = {
+    type: "message",
+    content: "Hello world, again!",
+    user: user2
+  };
+
+  const cristianReceiver = jest.fn(message => {
+    console.log(message);
+  });
+
+  const danielaReceiver = jest.fn(message => {
+    console.log(message);
+  });
+
+  cristianChat.onMessage(cristianReceiver);
+  danielaChat.onMessage(danielaReceiver);
+
+  await danielaChat.sendMessage(message);
+  await danielaChat.sendMessage(message2);
+
+  expect(cristianReceiver.mock.calls.length).toBe(2);
+  expect(danielaReceiver.mock.calls.length).toBe(0);
+});
