@@ -165,7 +165,8 @@ test("Users can send messages", () => {
   const message: ChatMessage = {
     type: "message",
     content: "Hello world",
-    user: user1
+    user: user1,
+    room: { id: roomId }
   };
 
   myChat.sendMessage(message);
@@ -174,7 +175,7 @@ test("Users can send messages", () => {
   expect(getMessages(roomId)).toHaveLength(2);
 });
 
-test("Users can receive messages from others", async () => {
+test("Users can receive messages from other users in the same room", async () => {
   const user1 = {
     id: "123-32323",
     firstName: "Cristian",
@@ -236,7 +237,7 @@ test("Users cannot receive messages from other rooms ", async () => {
     lastName: "Bulgarelli"
   };
   const roomId1 = "123-456-abc";
-  const roomId2 = "123-456-abb";
+  const roomId2 = "123-991-abb";
   const cristianChat = chat(user1);
   const danielaChat = chat(user2);
 
@@ -249,6 +250,7 @@ test("Users cannot receive messages from other rooms ", async () => {
     user: user2,
     room: { id: roomId2 }
   };
+
   const message2: ChatMessage = {
     type: "message",
     content: "Hello world, again!",
