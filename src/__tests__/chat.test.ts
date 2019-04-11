@@ -1,8 +1,14 @@
-import { chat } from "../chat";
-import { localChatDriver, clearRooms } from "../localChatDriver";
+import { chat, ChatMessage } from "../chat";
+import {
+  localChatDriver,
+  clearRooms,
+  clearMessages,
+  getMessages
+} from "../localChatDriver";
 
 afterEach(() => {
   clearRooms();
+  clearMessages();
 });
 
 test("Creates a chat instance", () => {
@@ -81,6 +87,7 @@ test("Entering a room triggers the enter-room event", () => {
     firstName: "Cristian",
     lastName: "Gabbanini"
   };
+
   const user2 = {
     id: "342-32323",
     firstName: "Daniela",
@@ -89,14 +96,37 @@ test("Entering a room triggers the enter-room event", () => {
   const cristianChat = chat(localChatDriver, user1);
 
   const eventHandler = jest.fn((user, room) => {
-    expect(user).toEqual(user2);
-    expect(room.id).toEqual("123-456-abc");
+    if (user.id === user1.id) {
+      console.log("I am online!");
+    } else {
+      console.log(`${user.firstName} ${user.lastName} is online!`);
+    }
   });
 
   cristianChat.onEnterRoom(eventHandler);
 
   const danielaChat = chat(localChatDriver, user2);
   const leaveRoom1 = danielaChat.enterRoom("123-456-abc");
-
   expect(eventHandler.mock.calls.length).toBe(1);
+});
+
+test("Users can send messages", () => {
+  const user1 = {
+    id: "123-32323",
+    firstName: "Cristian",
+    lastName: "Gabbanini"
+  };
+  const myChat = chat(localChatDriver, user1);
+  const roomId = "123-456-abc";
+  const leaveRoom1 = myChat.enterRoom(roomId);
+  const message: ChatMessage = {
+    type: "message",
+    content: "Hello world",
+    user: user1
+  };
+
+  myChat.sendMessage(message);
+  myChat.sendMessage(message);
+
+  expect(getMessages(roomId)).toHaveLength(2);
 });

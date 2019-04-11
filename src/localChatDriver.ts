@@ -1,9 +1,10 @@
-import { User, Room, ChatEvent } from "./chat";
+import { User, Room, ChatEvent, ChatMessage } from "./chat";
 
 // --------------------------------------------------------------------------------------------
 // Demo usage
 const rooms: { [r: string]: User[] } = {};
 const listeners: ((event: ChatEvent) => void)[] = [];
+const messages: { [r: string]: ChatMessage[] } = {};
 
 export const localChatDriver = (user: User) => {
   let enteredRoom: Room;
@@ -44,6 +45,10 @@ export const localChatDriver = (user: User) => {
           );
           break;
         case "message":
+          if (typeof messages[enteredRoom.id] === "undefined") {
+            messages[enteredRoom.id] = [];
+          }
+          messages[enteredRoom.id].push(e.content);
           break;
       }
 
@@ -60,4 +65,12 @@ export const localChatDriver = (user: User) => {
 
 export function clearRooms() {
   Object.keys(rooms).map(roomId => delete rooms[roomId]);
+}
+
+export function clearMessages() {
+  Object.keys(messages).map(roomId => delete messages[roomId]);
+}
+
+export function getMessages(roomId: string) {
+  return messages[roomId];
 }

@@ -52,7 +52,7 @@ export type User = {
   lastName?: string;
 };
 
-type ChatMessage = { type: "message"; content: string; user: User };
+export type ChatMessage = { type: "message"; content: string; user: User };
 
 function onMessage(
   this: ReturnType<ChatDriver>,
@@ -60,7 +60,9 @@ function onMessage(
 ): void {
   this.listen(event => {
     if (event.type === "message") {
-      fn(event.content);
+      if (event.content.user.id !== this.user.id) {
+        fn(event.content);
+      }
     }
   });
 }
@@ -71,10 +73,8 @@ function onEnterRoom(
 ): void {
   this.listen(event => {
     if (event.type === "enter-room") {
-      if (event.user.id !== this.user.id) {
-        const { user, room } = event;
-        fn(user, room);
-      }
+      const { user, room } = event;
+      fn(user, room);
     }
   });
 }
