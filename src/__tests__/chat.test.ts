@@ -3,7 +3,8 @@ import {
   localChatDriver,
   clearRooms,
   clearMessages,
-  getMessages
+  getMessages,
+  usersInRoom
 } from "../localChatDriver";
 
 afterEach(() => {
@@ -45,7 +46,7 @@ test("Users can enter room", () => {
 
   expect(typeof leaveRoom1).toBe("function");
   expect(typeof leaveRoom2).toBe("function");
-  const users = myChat.driver.usersInRoom("123-456-abc");
+  const users = usersInRoom("123-456-abc");
 
   expect(users).toHaveLength(2);
   expect(users[0]).toEqual(user1);
@@ -63,7 +64,7 @@ test("The same user cannot enter a room twice", () => {
   myChat.enterRoom("123-456-abc");
   myChat.enterRoom("123-456-abc");
 
-  const users = myChat.driver.usersInRoom("123-456-abc");
+  const users = usersInRoom("123-456-abc");
   expect(users).toHaveLength(1);
 });
 
@@ -77,7 +78,7 @@ test("User can leave a room", () => {
 
   const leaveRoom1 = myChat.enterRoom("123-456-abc");
   leaveRoom1();
-  const users = myChat.driver.usersInRoom("123-456-abc");
+  const users = usersInRoom("123-456-abc");
   expect(users).toHaveLength(0);
 });
 

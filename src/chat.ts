@@ -39,7 +39,6 @@ export interface ChatDriver {
     listen: (fn: (event: ChatEvent) => void) => void;
     trigger: (e: ChatEvent) => Promise<boolean>;
     user: User;
-    usersInRoom(roomId: string): User[];
   };
 }
 

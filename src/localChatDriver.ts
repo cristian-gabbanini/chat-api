@@ -55,14 +55,14 @@ export const localChatDriver = (user: User) => {
       listeners.forEach(listener => listener(e));
 
       return Promise.resolve(true);
-    },
-    usersInRoom(roomId: string) {
-      return rooms[roomId];
     }
   };
   return driver;
 };
 
+export function usersInRoom(roomId: string) {
+  return rooms[roomId];
+}
 export function clearRooms() {
   Object.keys(rooms).map(roomId => delete rooms[roomId]);
 }
