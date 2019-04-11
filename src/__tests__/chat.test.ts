@@ -25,6 +25,7 @@ test("Creates a chat instance", () => {
   expect(myChat).toHaveProperty("sendMessage");
   expect(myChat).toHaveProperty("onMessage");
   expect(myChat).toHaveProperty("onEnterRoom");
+  expect(myChat).toHaveProperty("onLeaveRoom");
 });
 
 test("Users can enter room", () => {
