@@ -6,6 +6,7 @@ interface Connection {
   onLeaveRoom(fn: (user: User, room: Room) => void): void;
   disconnect: () => void;
   driver: ReturnType<ChatDriver>;
+  roomId?: string;
 }
 
 type MessageEvent = { ts: number; type: "message"; content: ChatMessage };
@@ -52,16 +53,24 @@ export type User = {
   lastName?: string;
 };
 
-export type ChatMessage = { type: "message"; content: string; user: User };
+export type ChatMessage = {
+  type: "message";
+  content: string;
+  user: User;
+  room: Room;
+};
 
 function onMessage(
   this: ReturnType<ChatDriver>,
+  conn: Connection,
   fn: (message: ChatMessage) => void
 ): void {
   this.listen(event => {
     if (event.type === "message") {
-      if (event.content.user.id !== this.user.id) {
-        fn(event.content);
+      if (conn.roomId === event.content.room.id) {
+        if (event.content.user.id !== this.user.id) {
+          fn(event.content);
+        }
       }
     }
   });
@@ -95,7 +104,11 @@ function disconnect(this: ReturnType<ChatDriver>) {
   this.disconnect();
 }
 
-function enterRoom(this: ReturnType<ChatDriver>, roomId: string) {
+function enterRoom(
+  this: ReturnType<ChatDriver>,
+  conn: Connection,
+  roomId: string
+) {
   const enter: UserEnterRoomEvent = {
     ts: Date.now(),
     type: "enter-room",
@@ -104,6 +117,7 @@ function enterRoom(this: ReturnType<ChatDriver>, roomId: string) {
   };
 
   this.trigger(enter);
+  conn.roomId = roomId;
 
   return () =>
     this.trigger({
@@ -115,20 +129,25 @@ function enterRoom(this: ReturnType<ChatDriver>, roomId: string) {
 }
 
 function sendMessage(this: ReturnType<ChatDriver>, message: ChatMessage) {
-  this.trigger({ ts: Date.now(), type: "message", content: message });
+  this.trigger({
+    ts: Date.now(),
+    type: "message",
+    content: message
+  });
   return Promise.resolve(true);
 }
 
 export function chat(driver: ChatDriver, user: User): Connection {
   const boundDriver = driver(user);
-  const conn: Connection = {
-    enterRoom: enterRoom.bind(boundDriver),
+  const conn: any = {
     sendMessage: sendMessage.bind(boundDriver),
     disconnect: disconnect.bind(boundDriver),
-    onMessage: onMessage.bind(boundDriver),
     onEnterRoom: onEnterRoom.bind(boundDriver),
     onLeaveRoom: onLeaveRoom.bind(boundDriver),
     driver: boundDriver
   };
-  return conn;
+  conn.enterRoom = enterRoom.bind(boundDriver, conn);
+  conn.onMessage = onMessage.bind(boundDriver, conn);
+
+  return conn as Connection;
 }

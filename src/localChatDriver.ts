@@ -45,10 +45,12 @@ export const localChatDriver = (user: User) => {
           );
           break;
         case "message":
-          if (typeof messages[enteredRoom.id] === "undefined") {
-            messages[enteredRoom.id] = [];
+          if ("id" in enteredRoom) {
+            if (typeof messages[enteredRoom.id] === "undefined") {
+              messages[enteredRoom.id] = [];
+            }
+            messages[enteredRoom.id].push(e.content);
           }
-          messages[enteredRoom.id].push(e.content);
           break;
       }
 

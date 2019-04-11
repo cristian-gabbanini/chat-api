@@ -7,6 +7,8 @@ import {
   usersInRoom
 } from "../localChatDriver";
 
+const _test = () => {};
+
 afterEach(() => {
   clearRooms();
   clearMessages();
@@ -194,12 +196,14 @@ test("Users can receive messages from others", async () => {
   const message: ChatMessage = {
     type: "message",
     content: "Hello world",
-    user: user2
+    user: user2,
+    room: { id: roomId }
   };
   const message2: ChatMessage = {
     type: "message",
     content: "Hello world, again!",
-    user: user2
+    user: user2,
+    room: { id: roomId }
   };
 
   const cristianReceiver = jest.fn(message => {
@@ -218,4 +222,46 @@ test("Users can receive messages from others", async () => {
 
   expect(cristianReceiver.mock.calls.length).toBe(2);
   expect(danielaReceiver.mock.calls.length).toBe(0);
+});
+
+test("Users cannot receive messages from other rooms ", async () => {
+  const user1 = {
+    id: "123-32323",
+    firstName: "Cristian",
+    lastName: "Gabbanini"
+  };
+  const user2 = {
+    id: "444-32323",
+    firstName: "Daniela",
+    lastName: "Bulgarelli"
+  };
+  const roomId1 = "123-456-abc";
+  const roomId2 = "123-456-abb";
+  const cristianChat = chat(user1);
+  const danielaChat = chat(user2);
+
+  cristianChat.enterRoom(roomId1);
+  danielaChat.enterRoom(roomId2);
+
+  const message: ChatMessage = {
+    type: "message",
+    content: "Hello world",
+    user: user2,
+    room: { id: roomId2 }
+  };
+  const message2: ChatMessage = {
+    type: "message",
+    content: "Hello world, again!",
+    user: user2,
+    room: { id: roomId2 }
+  };
+
+  const cristianReceiver = jest.fn(message => {});
+
+  cristianChat.onMessage(cristianReceiver);
+
+  await danielaChat.sendMessage(message);
+  await danielaChat.sendMessage(message2);
+
+  expect(cristianReceiver.mock.calls.length).toBe(0);
 });
