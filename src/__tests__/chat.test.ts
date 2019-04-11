@@ -110,6 +110,25 @@ test("Entering a room triggers the enter-room event", () => {
   expect(eventHandler.mock.calls.length).toBe(1);
 });
 
+test("Leaving a room triggers the leave-room event", () => {
+  const user1 = {
+    id: "123-32323",
+    firstName: "Cristian",
+    lastName: "Gabbanini"
+  };
+
+  const cristianChat = chat(localChatDriver, user1);
+
+  const eventHandler = jest.fn((user, room) => {});
+
+  const leaveRoom = cristianChat.enterRoom("123-456-111");
+  cristianChat.onLeaveRoom(eventHandler);
+
+  leaveRoom();
+
+  expect(eventHandler.mock.calls.length).toBe(1);
+});
+
 test("Users can send messages", () => {
   const user1 = {
     id: "123-32323",

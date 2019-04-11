@@ -3,6 +3,7 @@ interface Connection {
   sendMessage(message: ChatMessage): Promise<boolean>;
   onMessage(fn: (message: ChatMessage) => void): void;
   onEnterRoom(fn: (user: User, room: Room) => void): void;
+  onLeaveRoom(fn: (user: User, room: Room) => void): void;
   disconnect: () => void;
   driver: ReturnType<ChatDriver>;
 }
@@ -79,6 +80,18 @@ function onEnterRoom(
   });
 }
 
+function onLeaveRoom(
+  this: ReturnType<ChatDriver>,
+  fn: (user: User, room: Room) => void
+): void {
+  this.listen(event => {
+    if (event.type === "leave-room") {
+      const { user, room } = event;
+      fn(user, room);
+    }
+  });
+}
+
 function disconnect(this: ReturnType<ChatDriver>) {
   this.disconnect();
 }
@@ -115,6 +128,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
     disconnect: disconnect.bind(boundDriver),
     onMessage: onMessage.bind(boundDriver),
     onEnterRoom: onEnterRoom.bind(boundDriver),
+    onLeaveRoom: onLeaveRoom.bind(boundDriver),
     driver: boundDriver
   };
   return conn;
