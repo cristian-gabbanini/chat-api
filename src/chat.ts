@@ -77,23 +77,28 @@ export function chat(driver: ChatDriver, user: User): Connection {
   let currentRoomId: string | null = null;
 
   function enterRoom(this: ReturnType<ChatDriver>, roomId: string) {
-    const enter: UserEnterRoomEvent = {
-      ts: Date.now(),
-      type: "enter-room",
-      room: { id: roomId },
-      user: this.user
-    };
-
-    this.trigger(enter);
-    currentRoomId = roomId;
-
-    return () =>
-      this.trigger({
+    return new Promise((res, rej) => {
+      const enter: UserEnterRoomEvent = {
         ts: Date.now(),
-        type: "leave-room",
+        type: "enter-room",
         room: { id: roomId },
         user: this.user
-      });
+      };
+
+      this.trigger(enter)
+        .then(_ => {
+          currentRoomId = roomId;
+          res(() =>
+            this.trigger({
+              ts: Date.now(),
+              type: "leave-room",
+              room: { id: roomId },
+              user: this.user
+            })
+          );
+        })
+        .catch(rej);
+    });
   }
 
   function sendMessage(this: ReturnType<ChatDriver>, message: ChatMessage) {

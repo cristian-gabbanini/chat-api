@@ -49,12 +49,12 @@ test("Creates a chat instance", () => {
   expect(myChat).toHaveProperty("onLeaveRoom");
 });
 
-test("Users can enter room", () => {
+test("Users can enter room", async () => {
   const myChat = chat(chatUser1);
   const myChat2 = chat(chatUser2);
 
-  const leaveRoom1 = myChat.enterRoom("123-456-abc");
-  const leaveRoom2 = myChat2.enterRoom("123-456-abc");
+  const leaveRoom1 = await myChat.enterRoom("123-456-abc");
+  const leaveRoom2 = await myChat2.enterRoom("123-456-abc");
 
   expect(typeof leaveRoom1).toBe("function");
   expect(typeof leaveRoom2).toBe("function");
@@ -65,21 +65,21 @@ test("Users can enter room", () => {
   expect(users[1]).toEqual(chatUser2);
 });
 
-test("The same user cannot enter a room twice", () => {
+test("The same user cannot enter a room twice", async () => {
   const myChat = chat(chatUser1);
 
-  myChat.enterRoom("123-456-abc");
-  myChat.enterRoom("123-456-abc");
+  await myChat.enterRoom("123-456-abc");
+  await myChat.enterRoom("123-456-abc");
 
   const users = _usersInRoom("123-456-abc");
   expect(users).toHaveLength(1);
 });
 
-test("User can leave a room", () => {
+test("User can leave a room", async () => {
   const myChat = chat(chatUser1);
 
-  const leaveRoom1 = myChat.enterRoom("123-456-abc");
-  leaveRoom1();
+  const leaveRoom1 = await myChat.enterRoom("123-456-abc");
+  await leaveRoom1();
   const users = _usersInRoom("123-456-abc");
   expect(users).toHaveLength(0);
 });
@@ -217,9 +217,14 @@ describe("Events", () => {
 });
 
 describe("Errors", () => {
-  test("Entering a room which the user is not allowed to enter throws an error", () => {
+  test("Entering a room which the user is not allowed to enter throws an error", async () => {
     const cristianChat = chat(chatUser1);
-    expect(() => cristianChat.enterRoom("111-111-111")).toThrow();
+    try {
+      await cristianChat.enterRoom("111-111-111");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      console.log(error);
+    }
   });
 
   test("Sending a message before entering a room throws an error", () => {
