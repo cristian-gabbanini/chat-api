@@ -1,12 +1,11 @@
 interface Connection {
-  enterRoom: (roomId: string) => () => Promise<boolean>;
+  enterRoom: (roomId: string) => Promise<() => void>;
   sendMessage(message: ChatMessage): Promise<boolean>;
   onMessage(fn: (message: ChatMessage) => void): void;
   onEnterRoom(fn: (user: User, room: Room) => void): void;
   onLeaveRoom(fn: (user: User, room: Room) => void): void;
   disconnect: () => void;
   driver: ReturnType<ChatDriver>;
-  roomId?: string;
 }
 
 export type MessageId = string;
@@ -40,7 +39,6 @@ export interface ChatDriver {
     disconnect: () => void;
     listen: (fn: (event: ChatEvent) => void) => void;
     trigger: (e: ChatEvent) => Promise<boolean>;
-    user: User;
   };
 }
 
@@ -50,8 +48,8 @@ export interface Room {
 
 export type User = {
   id: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
 };
 
 export type ChatMessage = {
@@ -76,13 +74,16 @@ export function chat(driver: ChatDriver, user: User): Connection {
 
   let currentRoomId: string | null = null;
 
-  function enterRoom(this: ReturnType<ChatDriver>, roomId: string) {
+  function enterRoom(
+    this: ReturnType<ChatDriver>,
+    roomId: string
+  ): Promise<() => void> {
     return new Promise((res, rej) => {
       const enter: UserEnterRoomEvent = {
         ts: Date.now(),
         type: "enter-room",
         room: { id: roomId },
-        user: this.user
+        user
       };
 
       this.trigger(enter)
@@ -93,7 +94,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
               ts: Date.now(),
               type: "leave-room",
               room: { id: roomId },
-              user: this.user
+              user
             })
           );
         })
@@ -133,7 +134,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
     this.listen(event => {
       if (event.type === "on-message") {
         if (currentRoomId === event.content.room.id) {
-          if (event.content.user.id !== this.user.id) {
+          if (event.content.user.id !== user.id) {
             fn(event.content);
           }
         }
