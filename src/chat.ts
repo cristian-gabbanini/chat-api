@@ -9,7 +9,7 @@ interface Connection {
   roomId?: string;
 }
 
-type MessageEvent = { ts: number; type: "message"; content: ChatMessage };
+type MessageEvent = { ts: number; type: "on-message"; content: ChatMessage };
 
 type UserEnterRoomEvent = {
   ts: number;
@@ -85,7 +85,7 @@ function disconnect(this: ReturnType<ChatDriver>) {
 function sendMessage(this: ReturnType<ChatDriver>, message: ChatMessage) {
   this.trigger({
     ts: Date.now(),
-    type: "message",
+    type: "on-message",
     content: message
   });
   return Promise.resolve(true);
@@ -131,7 +131,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
     fn: (message: ChatMessage) => void
   ): void {
     this.listen(event => {
-      if (event.type === "message") {
+      if (event.type === "on-message") {
         if (currentRoomId === event.content.room.id) {
           if (event.content.user.id !== this.user.id) {
             fn(event.content);

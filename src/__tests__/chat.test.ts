@@ -88,7 +88,7 @@ test("User can leave a room", () => {
   expect(users).toHaveLength(0);
 });
 
-test("Entering a room triggers the enter-room event", () => {
+test("Entering a room triggers the 'enter-room' event", () => {
   const user1 = {
     id: "123-32323",
     firstName: "Cristian",
@@ -117,7 +117,7 @@ test("Entering a room triggers the enter-room event", () => {
   expect(eventHandler.mock.calls.length).toBe(1);
 });
 
-test("Leaving a room triggers the leave-room event", () => {
+test("Leaving a room triggers the 'leave-room' event", () => {
   const user1 = {
     id: "123-32323",
     firstName: "Cristian",
@@ -136,7 +136,7 @@ test("Leaving a room triggers the leave-room event", () => {
   expect(eventHandler.mock.calls.length).toBe(1);
 });
 
-test("Disconnecting triggers the leave-room event", () => {
+test("Disconnecting triggers the 'leave-room' event", () => {
   const user1 = {
     id: "123-32323",
     firstName: "Cristian",
@@ -177,7 +177,7 @@ test("Users can send messages", () => {
   expect(_getMessages(roomId)).toHaveLength(2);
 });
 
-test("Sending a message triggers the message event", () => {
+test("Sending a message triggers the 'on-message' event", () => {
   const user1 = {
     id: "123-32323",
     firstName: "Cristian",
@@ -233,6 +233,7 @@ test("Users can receive messages from other users in the same room", async () =>
     user: user2,
     room: { id: roomId }
   };
+
   const message2: ChatMessage = {
     type: "message",
     content: "Hello world, again!",
@@ -240,13 +241,9 @@ test("Users can receive messages from other users in the same room", async () =>
     room: { id: roomId }
   };
 
-  const cristianReceiver = jest.fn(message => {
-    console.log(message);
-  });
+  const cristianReceiver = jest.fn(message => {});
 
-  const danielaReceiver = jest.fn(message => {
-    console.log(message);
-  });
+  const danielaReceiver = jest.fn(message => {});
 
   cristianChat.onMessage(cristianReceiver);
   danielaChat.onMessage(danielaReceiver);

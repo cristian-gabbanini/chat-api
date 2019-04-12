@@ -44,7 +44,7 @@ export const localChatDriver = (user: User) => {
             user => user.id !== e.user.id
           );
           break;
-        case "message":
+        case "on-message":
           if ("id" in enteredRoom) {
             if (typeof messages[enteredRoom.id] === "undefined") {
               messages[enteredRoom.id] = [];
