@@ -178,7 +178,7 @@ function addId<T extends object>(object: T): T & HasId {
   };
 }
 
-function freeze<T extends object>(object: T): Readonly<T> {
+function freeze<T extends {}>(object: T): Readonly<T> {
   return Object.freeze(object);
 }
 
