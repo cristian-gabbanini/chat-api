@@ -80,49 +80,6 @@ test("User can leave a room", () => {
   expect(users).toHaveLength(0);
 });
 
-test("Entering a room which the user is not allowed to enter throws an error", () => {
-  const cristianChat = chat(cristian);
-  expect(() => cristianChat.enterRoom("111-111-111")).toThrow();
-});
-
-test("Entering a room triggers the 'enter-room' event", () => {
-  const cristianChat = chat(cristian);
-
-  const eventHandler = jest.fn((user, room) => {});
-
-  cristianChat.onEnterRoom(eventHandler);
-
-  const danielaChat = chat(daniela);
-  const leaveRoom1 = danielaChat.enterRoom("123-456-abc");
-  expect(eventHandler.mock.calls.length).toBe(1);
-});
-
-test("Leaving a room triggers the 'leave-room' event", () => {
-  const cristianChat = chat(cristian);
-
-  const eventHandler = jest.fn((user, room) => {});
-
-  const leaveRoom = cristianChat.enterRoom("123-456-abc");
-  cristianChat.onLeaveRoom(eventHandler);
-
-  leaveRoom();
-
-  expect(eventHandler.mock.calls.length).toBe(1);
-});
-
-test("Disconnecting triggers the 'leave-room' event", () => {
-  const cristianChat = chat(cristian);
-
-  const eventHandler = jest.fn((user, room) => {});
-
-  cristianChat.enterRoom("123-456-abc");
-  cristianChat.onLeaveRoom(eventHandler);
-
-  cristianChat.disconnect();
-
-  expect(eventHandler.mock.calls.length).toBe(1);
-});
-
 test("Users can send messages", () => {
   const myChat = chat(cristian);
   const roomId = "123-456-abc";
@@ -136,39 +93,6 @@ test("Users can send messages", () => {
   myChat.sendMessage(message);
 
   expect(_getMessages(roomId)).toHaveLength(2);
-});
-
-test("Sending a message before entering a room throws an error", () => {
-  const myChat = chat(cristian);
-  const roomId = "123-456-abc";
-
-  const message: ChatMessage = {
-    type: "message",
-    content: "Hello world"
-  };
-
-  expect(() => myChat.sendMessage(message)).toThrow(
-    "You must enter a room before you can send a message"
-  );
-});
-
-test("Sending a message triggers the 'on-message' event", () => {
-  const myChat = chat(cristian);
-  const danielaChat = chat(daniela);
-  const roomId = "123-456-abc";
-  const messageEventHandler = jest.fn();
-  myChat.enterRoom(roomId);
-  danielaChat.enterRoom(roomId);
-  danielaChat.onMessage(messageEventHandler);
-
-  const message: ChatMessage = {
-    type: "message",
-    content: "Hello world"
-  };
-
-  myChat.sendMessage(message);
-
-  expect(messageEventHandler.mock.calls.length).toBe(1);
 });
 
 test("Users can receive messages from other users in the same room", async () => {
@@ -234,12 +158,92 @@ test("Users cannot receive messages from other rooms ", async () => {
   expect(cristianReceiver.mock.calls.length).toBe(0);
 });
 
-test("Listening to messages before entering a room throws an error ", async () => {
-  const cristianChat = chat(cristian);
+describe("Events", () => {
+  test("Entering a room triggers the 'enter-room' event", () => {
+    const cristianChat = chat(cristian);
 
-  const cristianReceiver = jest.fn(message => {});
+    const eventHandler = jest.fn((user, room) => {});
 
-  expect(() => cristianChat.onMessage(cristianReceiver)).toThrow(
-    "You must enter a room before you can send a message"
-  );
+    cristianChat.onEnterRoom(eventHandler);
+
+    const danielaChat = chat(daniela);
+    const leaveRoom1 = danielaChat.enterRoom("123-456-abc");
+    expect(eventHandler.mock.calls.length).toBe(1);
+  });
+
+  test("Leaving a room triggers the 'leave-room' event", () => {
+    const cristianChat = chat(cristian);
+
+    const eventHandler = jest.fn((user, room) => {});
+
+    const leaveRoom = cristianChat.enterRoom("123-456-abc");
+    cristianChat.onLeaveRoom(eventHandler);
+
+    leaveRoom();
+
+    expect(eventHandler.mock.calls.length).toBe(1);
+  });
+
+  test("Disconnecting triggers the 'leave-room' event", () => {
+    const cristianChat = chat(cristian);
+
+    const eventHandler = jest.fn((user, room) => {});
+
+    cristianChat.enterRoom("123-456-abc");
+    cristianChat.onLeaveRoom(eventHandler);
+
+    cristianChat.disconnect();
+
+    expect(eventHandler.mock.calls.length).toBe(1);
+  });
+
+  test("Sending a message triggers the 'on-message' event", () => {
+    const myChat = chat(cristian);
+    const danielaChat = chat(daniela);
+    const roomId = "123-456-abc";
+    const messageEventHandler = jest.fn();
+    myChat.enterRoom(roomId);
+    danielaChat.enterRoom(roomId);
+    danielaChat.onMessage(messageEventHandler);
+
+    const message: ChatMessage = {
+      type: "message",
+      content: "Hello world"
+    };
+
+    myChat.sendMessage(message);
+
+    expect(messageEventHandler.mock.calls.length).toBe(1);
+  });
+});
+
+describe("Errors", () => {
+  test("Entering a room which the user is not allowed to enter throws an error", () => {
+    const cristianChat = chat(cristian);
+    expect(() => cristianChat.enterRoom("111-111-111")).toThrow();
+  });
+
+  test("Sending a message before entering a room throws an error", () => {
+    const myChat = chat(cristian);
+    const roomId = "123-456-abc";
+
+    const message: ChatMessage = {
+      type: "message",
+      content: "Hello world"
+    };
+
+    expect(() => myChat.sendMessage(message)).toThrow(
+      "You must enter a room before you can send a message"
+    );
+  });
+
+  test("Listening to messages before entering a room throws an error ", async () => {
+    const cristianChat = chat(cristian);
+
+    const cristianReceiver = jest.fn(message => {});
+
+    expect(() => cristianChat.onMessage(cristianReceiver)).toThrow(
+      "You must enter a room before you can send a message"
+    );
+  });
 });
