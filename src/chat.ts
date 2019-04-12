@@ -9,7 +9,11 @@ interface Connection {
   roomId?: string;
 }
 
-type MessageEvent = { ts: number; type: "on-message"; content: ChatMessage };
+type MessageEvent = {
+  ts: number;
+  type: "on-message";
+  content: ChatMessage & ChatMessageSource;
+};
 
 type UserEnterRoomEvent = {
   ts: number;
@@ -50,40 +54,15 @@ export type User = {
 export type ChatMessage = {
   type: "message";
   content: string;
+};
+
+type ChatMessageSource = {
   user: User;
   room: Room;
 };
 
-function onEnterRoom(
-  this: ReturnType<ChatDriver>,
-  fn: (user: User, room: Room) => void
-): void {
-  this.listen(event => {
-    if (event.type === "enter-room") {
-      const { user, room } = event;
-      fn(user, room);
-    }
-  });
-}
-
-function onLeaveRoom(
-  this: ReturnType<ChatDriver>,
-  fn: (user: User, room: Room) => void
-): void {
-  this.listen(event => {
-    if (event.type === "leave-room") {
-      const { user, room } = event;
-      fn(user, room);
-    }
-  });
-}
-
-function disconnect(this: ReturnType<ChatDriver>) {
-  this.disconnect();
-}
-
-function isDefined<T>(arg: T | undefined): arg is T {
-  return typeof arg !== "undefined";
+function isString<T>(arg: T | null): arg is T {
+  return typeof arg === "string";
 }
 
 export function chat(driver: ChatDriver, user: User): Connection {
@@ -91,17 +70,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
     "You must enter a room before you can send a message";
   const boundDriver = driver(user);
 
-  let currentRoomId: string | null;
-
-  const conn: Connection = {
-    enterRoom: enterRoom.bind(boundDriver),
-    sendMessage: sendMessage.bind(boundDriver),
-    disconnect: disconnect.bind(boundDriver),
-    onMessage: onMessage.bind(boundDriver),
-    onEnterRoom: onEnterRoom.bind(boundDriver),
-    onLeaveRoom: onLeaveRoom.bind(boundDriver),
-    driver: boundDriver
-  };
+  let currentRoomId: string | null = null;
 
   function enterRoom(this: ReturnType<ChatDriver>, roomId: string) {
     const enter: UserEnterRoomEvent = {
@@ -124,21 +93,28 @@ export function chat(driver: ChatDriver, user: User): Connection {
   }
 
   function sendMessage(this: ReturnType<ChatDriver>, message: ChatMessage) {
-    if (!isDefined(currentRoomId)) {
+    if (!isString(currentRoomId)) {
       throw Error(ENTER_ROOM_ERROR);
     }
+
+    const messageEvent: ChatMessage & ChatMessageSource = {
+      ...message,
+      user,
+      room: { id: currentRoomId }
+    };
 
     this.trigger({
       ts: Date.now(),
       type: "on-message",
-      content: message
+      content: messageEvent
     });
+
     return Promise.resolve(true);
   }
 
   function onMessage(
     this: ReturnType<ChatDriver>,
-    fn: (message: ChatMessage) => void
+    fn: (message: ChatMessage & ChatMessageSource) => void
   ): void {
     this.listen(event => {
       if (event.type === "on-message") {
@@ -150,6 +126,44 @@ export function chat(driver: ChatDriver, user: User): Connection {
       }
     });
   }
+
+  function onEnterRoom(
+    this: ReturnType<ChatDriver>,
+    fn: (user: User, room: Room) => void
+  ): void {
+    this.listen(event => {
+      if (event.type === "enter-room") {
+        const { user, room } = event;
+        fn(user, room);
+      }
+    });
+  }
+
+  function onLeaveRoom(
+    this: ReturnType<ChatDriver>,
+    fn: (user: User, room: Room) => void
+  ): void {
+    this.listen(event => {
+      if (event.type === "leave-room") {
+        const { user, room } = event;
+        fn(user, room);
+      }
+    });
+  }
+
+  function disconnect(this: ReturnType<ChatDriver>) {
+    this.disconnect();
+  }
+
+  const conn: Connection = {
+    enterRoom: enterRoom.bind(boundDriver),
+    sendMessage: sendMessage.bind(boundDriver),
+    disconnect: disconnect.bind(boundDriver),
+    onMessage: onMessage.bind(boundDriver),
+    onEnterRoom: onEnterRoom.bind(boundDriver),
+    onLeaveRoom: onLeaveRoom.bind(boundDriver),
+    driver: boundDriver
+  };
 
   return conn;
 }

@@ -219,9 +219,7 @@ test("Sending a message triggers the 'on-message' event", () => {
 
   const message: ChatMessage = {
     type: "message",
-    content: "Hello world",
-    user: user1,
-    room: { id: roomId }
+    content: "Hello world"
   };
 
   myChat.sendMessage(message);
@@ -250,16 +248,12 @@ test("Users can receive messages from other users in the same room", async () =>
 
   const message: ChatMessage = {
     type: "message",
-    content: "Hello world",
-    user: user2,
-    room: { id: roomId }
+    content: "Hello world"
   };
 
   const message2: ChatMessage = {
     type: "message",
-    content: "Hello world, again!",
-    user: user2,
-    room: { id: roomId }
+    content: "Hello world, again!"
   };
 
   const cristianReceiver = jest.fn(message => {});
@@ -297,16 +291,12 @@ test("Users cannot receive messages from other rooms ", async () => {
 
   const message: ChatMessage = {
     type: "message",
-    content: "Hello world",
-    user: user2,
-    room: { id: roomId2 }
+    content: "Hello world"
   };
 
   const message2: ChatMessage = {
     type: "message",
-    content: "Hello world, again!",
-    user: user2,
-    room: { id: roomId2 }
+    content: "Hello world, again!"
   };
 
   const cristianReceiver = jest.fn(message => {});
