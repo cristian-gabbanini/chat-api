@@ -67,7 +67,7 @@ function isString<T>(arg: T | null): arg is T {
 
 export function chat(driver: ChatDriver, user: User): Connection {
   const ENTER_ROOM_ERROR =
-    "You must enter a room before you can send a message";
+    "You must enter a room before you can send a message or listen to incoming messages";
   const boundDriver = driver(user);
 
   let currentRoomId: string | null = null;
@@ -116,6 +116,10 @@ export function chat(driver: ChatDriver, user: User): Connection {
     this: ReturnType<ChatDriver>,
     fn: (message: ChatMessage & ChatMessageSource) => void
   ): void {
+    if (!isString(currentRoomId)) {
+      throw Error(ENTER_ROOM_ERROR);
+    }
+
     this.listen(event => {
       if (event.type === "on-message") {
         if (currentRoomId === event.content.room.id) {

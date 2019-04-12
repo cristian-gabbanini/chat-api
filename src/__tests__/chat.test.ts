@@ -298,3 +298,19 @@ test("Users cannot receive messages from other rooms ", async () => {
 
   expect(cristianReceiver.mock.calls.length).toBe(0);
 });
+
+test("Listening to messages before entering a room throws an error ", async () => {
+  const user1 = {
+    id: "123-32323",
+    firstName: "Cristian",
+    lastName: "Gabbanini"
+  };
+
+  const cristianChat = chat(user1);
+
+  const cristianReceiver = jest.fn(message => {});
+
+  expect(() => cristianChat.onMessage(cristianReceiver)).toThrow(
+    "You must enter a room before you can send a message"
+  );
+});
