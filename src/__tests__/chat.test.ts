@@ -80,6 +80,11 @@ test("User can leave a room", () => {
   expect(users).toHaveLength(0);
 });
 
+test("Entering a room which the user is not allowed to enter throws an error", () => {
+  const cristianChat = chat(cristian);
+  expect(() => cristianChat.enterRoom("111-111-111")).toThrow();
+});
+
 test("Entering a room triggers the 'enter-room' event", () => {
   const cristianChat = chat(cristian);
 
