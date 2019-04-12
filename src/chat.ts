@@ -12,7 +12,7 @@ interface Connection {
 type MessageEvent = {
   ts: number;
   type: "on-message";
-  content: ChatMessage & ChatMessageSource;
+  content: ChatMessage & ChatMessageSource & HasTimestamp;
 };
 
 type UserEnterRoomEvent = {
@@ -52,10 +52,11 @@ export type User = {
 };
 
 export type ChatMessage = {
-  ts: string;
   type: "message";
   content: string;
 };
+
+type HasTimestamp = { ts: string };
 
 type ChatMessageSource = {
   user: User;
@@ -98,7 +99,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
       throw Error(ENTER_ROOM_ERROR);
     }
 
-    const messageEvent: ChatMessage & ChatMessageSource = {
+    const messageEvent: ChatMessage & ChatMessageSource & HasTimestamp = {
       ts: new Date().toISOString(),
       ...message,
       user,
