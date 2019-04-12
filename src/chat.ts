@@ -38,7 +38,7 @@ export interface ChatDriver {
     connect: () => Promise<boolean>;
     disconnect: () => void;
     listen: (fn: (event: ChatEvent) => void) => void;
-    trigger: (e: ChatEvent) => Promise<boolean>;
+    trigger: (e: ChatEvent) => Promise<{}>;
   };
 }
 
