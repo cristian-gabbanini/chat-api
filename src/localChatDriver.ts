@@ -25,17 +25,16 @@ const messages: {
     HasMessageId;
 } = {};
 const permissions: { [r: string]: User[] } = {};
+const events: { [eventId: string]: ChatEvent & HasMessageId } = {};
 
 function isDefined<T>(arg: T | undefined): arg is T {
   return typeof arg !== "undefined";
 }
 
-function addMessageId(
-  message: ChatMessage & ChatMessageSource & HasTimestamp
-): typeof message & HasMessageId {
+function addId<T extends object>(object: T): T & HasMessageId {
   return {
     id: uuid(),
-    ...message
+    ...object
   };
 }
 
@@ -57,12 +56,14 @@ export const localChatDriver = (user: User) => {
       listeners.push(fn);
     },
     trigger: (e: ChatEvent) => {
-      switch (e.type) {
+      const eventWithId = addId(e);
+
+      switch (eventWithId.type) {
         case "enter-room":
           const {
             user,
             room: { id }
-          } = e;
+          } = eventWithId;
 
           if (!isAllowed(user, id)) {
             throw Error(`User ${user.id} is not allowed to enter this room`);
@@ -75,12 +76,12 @@ export const localChatDriver = (user: User) => {
           const alreadyEntered = rooms[id].filter(u => u.id === user.id);
           if (alreadyEntered.length === 0) {
             rooms[id].push(user);
-            enteredRoom = e.room;
+            enteredRoom = eventWithId.room;
           }
           break;
         case "leave-room":
-          rooms[e.room.id] = rooms[e.room.id].filter(
-            user => user.id !== e.user.id
+          rooms[eventWithId.room.id] = rooms[eventWithId.room.id].filter(
+            user => user.id !== eventWithId.user.id
           );
           break;
         case "on-message":
@@ -89,8 +90,8 @@ export const localChatDriver = (user: User) => {
               roomsMessages[enteredRoom.id] = [];
             }
 
-            const messageWithId = addMessageId(e.content);
-            e.content = messageWithId;
+            const messageWithId = addId(eventWithId.content);
+            eventWithId.content = messageWithId;
 
             roomsMessages[enteredRoom.id].push(messageWithId.id);
 
@@ -99,8 +100,8 @@ export const localChatDriver = (user: User) => {
           break;
       }
 
-      listeners.forEach(listener => listener(e));
-
+      listeners.forEach(listener => listener(eventWithId));
+      events[eventWithId.id] = eventWithId;
       return Promise.resolve(true);
     }
   };
@@ -114,26 +115,38 @@ function isAllowed(user: User, roomId: string) {
   );
 }
 
+function clearObject(obj: { [k: string]: any }) {
+  Object.keys(obj).forEach(id => delete obj[id]);
+}
+
 export function usersInRoom(roomId: string) {
   return rooms[roomId];
 }
 export function clearRooms() {
-  Object.keys(rooms).map(roomId => delete rooms[roomId]);
+  clearObject(rooms);
 }
 
 export function clearMessages() {
-  Object.keys(roomsMessages).forEach(roomId => delete roomsMessages[roomId]);
-  Object.keys(messages).forEach(messageId => delete messages[messageId]);
+  clearObject(roomsMessages);
+  clearObject(messages);
 }
 
 export function clearPermissions() {
-  Object.keys(permissions).map(roomId => delete permissions[roomId]);
+  clearObject(permissions);
 }
 
 export function getMessages(roomId: string) {
   const messageIds = roomsMessages[roomId];
   const res = messageIds.map(id => messages[id]);
   return res;
+}
+
+export function getEvents() {
+  return events;
+}
+
+export function clearEvents() {
+  clearObject(events);
 }
 
 export function allowUser(user: User, roomId: string) {

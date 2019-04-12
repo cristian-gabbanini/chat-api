@@ -6,7 +6,9 @@ import {
   getMessages as _getMessages,
   usersInRoom as _usersInRoom,
   allowUser as _allowUser,
-  clearPermissions as _clearPermissions
+  clearPermissions as _clearPermissions,
+  getEvents as _getEvents,
+  clearEvents as _clearEvents
 } from "../localChatDriver";
 
 const _test = () => {};
@@ -31,6 +33,10 @@ beforeEach(() => {
   _clearPermissions();
   _allowUser(chatUser1, "123-456-abc");
   _allowUser(chatUser2, "123-456-abc");
+});
+
+afterAll(() => {
+  _clearEvents();
 });
 
 test("Creates a chat instance", () => {
@@ -142,9 +148,7 @@ test("Users cannot receive messages from other rooms ", async () => {
     content: "Hello world, again!"
   };
 
-  const cristianReceiver = jest.fn(message => {
-    console.log(message);
-  });
+  const cristianReceiver = jest.fn(message => {});
 
   cristianChat.onMessage(cristianReceiver);
 
@@ -220,7 +224,6 @@ describe("Errors", () => {
 
   test("Sending a message before entering a room throws an error", () => {
     const myChat = chat(chatUser1);
-    const roomId = "123-456-abc";
 
     const message: ChatMessage = {
       content: "Hello world"
