@@ -5,6 +5,11 @@ import { chat, User, Room, ChatEvent, ChatMessage } from "./chat";
 const rooms: { [r: string]: User[] } = {};
 const listeners: ((event: ChatEvent) => void)[] = [];
 const messages: { [r: string]: ChatMessage[] } = {};
+const permissions: { [r: string]: User[] } = {};
+
+function isDefined<T>(arg: T | undefined): arg is T {
+  return typeof arg !== "undefined";
+}
 
 export const localChatDriver = (user: User) => {
   let enteredRoom: Room;
@@ -30,9 +35,15 @@ export const localChatDriver = (user: User) => {
             user,
             room: { id }
           } = e;
+
+          if (!isAllowed(user, id)) {
+            throw Error(`User ${user.id} is not allowed to enter this room`);
+          }
+
           if (typeof rooms[id] === "undefined") {
             rooms[id] = [];
           }
+
           const alreadyEntered = rooms[id].filter(u => u.id === user.id);
           if (alreadyEntered.length === 0) {
             rooms[id].push(user);
@@ -62,6 +73,13 @@ export const localChatDriver = (user: User) => {
   return driver;
 };
 
+function isAllowed(user: User, roomId: string) {
+  return (
+    isDefined(permissions[roomId]) &&
+    permissions[roomId].filter(u => u.id === user.id).length === 1
+  );
+}
+
 export function usersInRoom(roomId: string) {
   return rooms[roomId];
 }
@@ -73,8 +91,21 @@ export function clearMessages() {
   Object.keys(messages).map(roomId => delete messages[roomId]);
 }
 
+export function clearPermissions() {
+  Object.keys(permissions).map(roomId => delete permissions[roomId]);
+}
+
 export function getMessages(roomId: string) {
   return messages[roomId];
+}
+
+export function allowUser(user: User, roomId: string) {
+  if (!isDefined(permissions[roomId])) {
+    permissions[roomId] = [];
+  }
+  if (!isAllowed(user, roomId)) {
+    permissions[roomId].push(user);
+  }
 }
 
 export const localChat = chat.bind(null, localChatDriver);
