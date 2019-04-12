@@ -52,6 +52,7 @@ export type User = {
 };
 
 export type ChatMessage = {
+  ts: number;
   type: "message";
   content: string;
 };
@@ -98,6 +99,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
     }
 
     const messageEvent: ChatMessage & ChatMessageSource = {
+      ts: Date.now(),
       ...message,
       user,
       room: { id: currentRoomId }
