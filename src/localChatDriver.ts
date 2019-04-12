@@ -11,35 +11,49 @@ import {
 
 import uuid from "uuid";
 
-// --------------------------------------------------------------------------------------------
-// Demo usage
 type HasId = {
   id: string;
 };
+
+/**
+ * @rooms Rooms
+ */
 const rooms: { [r: string]: User[] } = {};
+
+/**
+ * @listeners
+ */
 const listeners: ((event: ChatEvent) => void)[] = [];
+
+/**
+ * @roomsMessages
+ */
 const roomsMessages: { [roomId: string]: MessageId[] } = {};
+
+/**
+ * @messages
+ */
 const messages: {
   [messageId: string]: ChatMessage & ChatMessageSource & HasTimestamp & HasId;
 } = {};
+
+/**
+ * @permissions
+ * I permessi di accesso alle stanze degli utenti
+ */
 const permissions: { [r: string]: User[] } = {};
+
+/**
+ * @events
+ * Gli eventi generati dalla chat
+ */
 const events: { [eventId: string]: ChatEvent & HasId } = {};
 
-function isDefined<T>(arg: T | undefined): arg is T {
-  return typeof arg !== "undefined";
-}
-
-function addId<T extends object>(object: T): T & HasId {
-  return {
-    id: uuid(),
-    ...object
-  };
-}
-
-function freeze<T extends object>(object: T): Readonly<T> {
-  return Object.freeze(object);
-}
-
+// ------------------------------------------------------------------------
+// ========================================================================
+// Local chat driver
+// ========================================================================
+// ------------------------------------------------------------------------
 export const localChatDriver = (user: User) => {
   let enteredRoom: Room;
 
@@ -151,6 +165,21 @@ export function getEvents() {
 
 export function clearEvents() {
   clearObject(events);
+}
+
+function isDefined<T>(arg: T | undefined): arg is T {
+  return typeof arg !== "undefined";
+}
+
+function addId<T extends object>(object: T): T & HasId {
+  return {
+    id: uuid(),
+    ...object
+  };
+}
+
+function freeze<T extends object>(object: T): Readonly<T> {
+  return Object.freeze(object);
 }
 
 export function allowUser(user: User, roomId: string) {
