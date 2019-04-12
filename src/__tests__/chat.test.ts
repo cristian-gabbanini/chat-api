@@ -33,7 +33,6 @@ beforeEach(() => {
   _allowUser(chatUser2, "123-456-abc");
 });
 
-
 test("Creates a chat instance", () => {
   const myChat = chat(chatUser1);
 
@@ -79,7 +78,7 @@ test("User can leave a room", () => {
   expect(users).toHaveLength(0);
 });
 
-_test("Users can send messages", () => {
+test("Users can send messages", () => {
   const myChat = chat(chatUser1);
   const roomId = "123-456-abc";
   const leaveRoom1 = myChat.enterRoom(roomId);
