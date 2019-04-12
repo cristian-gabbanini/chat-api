@@ -175,6 +175,37 @@ test("Users can send messages", () => {
   expect(getMessages(roomId)).toHaveLength(2);
 });
 
+test("Sending a message triggers the message event", () => {
+  const user1 = {
+    id: "123-32323",
+    firstName: "Cristian",
+    lastName: "Gabbanini"
+  };
+  const user2 = {
+    id: "123-42323",
+    firstName: "Daniela",
+    lastName: "Bulgarelli"
+  };
+  const myChat = chat(user1);
+  const danielaChat = chat(user2);
+  const roomId = "123-456-abc";
+  const messageEventHandler = jest.fn();
+  myChat.enterRoom(roomId);
+  danielaChat.enterRoom(roomId);
+  danielaChat.onMessage(messageEventHandler);
+
+  const message: ChatMessage = {
+    type: "message",
+    content: "Hello world",
+    user: user1,
+    room: { id: roomId }
+  };
+
+  myChat.sendMessage(message);
+
+  expect(messageEventHandler.mock.calls.length).toBe(1);
+});
+
 test("Users can receive messages from other users in the same room", async () => {
   const user1 = {
     id: "123-32323",
