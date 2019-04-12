@@ -82,16 +82,13 @@ function disconnect(this: ReturnType<ChatDriver>) {
   this.disconnect();
 }
 
-function sendMessage(this: ReturnType<ChatDriver>, message: ChatMessage) {
-  this.trigger({
-    ts: Date.now(),
-    type: "on-message",
-    content: message
-  });
-  return Promise.resolve(true);
+function isDefined<T>(arg: T | undefined): arg is T {
+  return typeof arg !== "undefined";
 }
 
 export function chat(driver: ChatDriver, user: User): Connection {
+  const ENTER_ROOM_ERROR =
+    "You must enter a room before you can send a message";
   const boundDriver = driver(user);
 
   let currentRoomId: string | null;
@@ -124,6 +121,19 @@ export function chat(driver: ChatDriver, user: User): Connection {
         room: { id: roomId },
         user: this.user
       });
+  }
+
+  function sendMessage(this: ReturnType<ChatDriver>, message: ChatMessage) {
+    if (!isDefined(currentRoomId)) {
+      throw Error(ENTER_ROOM_ERROR);
+    }
+
+    this.trigger({
+      ts: Date.now(),
+      type: "on-message",
+      content: message
+    });
+    return Promise.resolve(true);
   }
 
   function onMessage(

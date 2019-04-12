@@ -177,6 +177,27 @@ test("Users can send messages", () => {
   expect(_getMessages(roomId)).toHaveLength(2);
 });
 
+test("Sending a message before entering a room throws an error", () => {
+  const user1 = {
+    id: "123-32323",
+    firstName: "Cristian",
+    lastName: "Gabbanini"
+  };
+  const myChat = chat(user1);
+  const roomId = "123-456-abc";
+
+  const message: ChatMessage = {
+    type: "message",
+    content: "Hello world",
+    user: user1,
+    room: { id: roomId }
+  };
+
+  expect(() => myChat.sendMessage(message)).toThrow(
+    "You must enter a room before you can send a message"
+  );
+});
+
 test("Sending a message triggers the 'on-message' event", () => {
   const user1 = {
     id: "123-32323",
