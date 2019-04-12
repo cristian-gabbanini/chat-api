@@ -84,17 +84,17 @@ test("User can leave a room", async () => {
   expect(users).toHaveLength(0);
 });
 
-test("Users can send messages", () => {
+test("Users can send messages", async () => {
   const myChat = chat(chatUser1);
   const roomId = "123-456-abc";
-  const leaveRoom1 = myChat.enterRoom(roomId);
+  const leaveRoom1 = await myChat.enterRoom(roomId);
 
   const message: ChatMessage = {
     content: "Hello world"
   };
 
-  myChat.sendMessage(message);
-  myChat.sendMessage(message);
+  await myChat.sendMessage(message);
+  await myChat.sendMessage(message);
 
   expect(_getMessages(roomId)).toHaveLength(2);
 });
@@ -105,8 +105,8 @@ test("Users can receive messages from other users in the same room", async () =>
   const cristianChat = chat(chatUser1);
   const danielaChat = chat(chatUser2);
 
-  cristianChat.enterRoom(roomId);
-  danielaChat.enterRoom(roomId);
+  await cristianChat.enterRoom(roomId);
+  await danielaChat.enterRoom(roomId);
 
   const message: ChatMessage = {
     content: "Hello world"
@@ -137,8 +137,8 @@ test("Users cannot receive messages from other rooms ", async () => {
   const danielaChat = chat(chatUser2);
 
   _allowUser(chatUser2, roomId2);
-  cristianChat.enterRoom(roomId1);
-  danielaChat.enterRoom(roomId2);
+  await cristianChat.enterRoom(roomId1);
+  await danielaChat.enterRoom(roomId2);
 
   const message: ChatMessage = {
     content: "Hello world"
@@ -171,15 +171,15 @@ describe("Events", () => {
     expect(eventHandler.mock.calls.length).toBe(1);
   });
 
-  test("Leaving a room triggers the 'leave-room' event", () => {
+  test("Leaving a room triggers the 'leave-room' event", async () => {
     const cristianChat = chat(chatUser1);
 
     const eventHandler = jest.fn((user, room) => {});
 
-    const leaveRoom = cristianChat.enterRoom("123-456-abc");
+    const leaveRoom = await cristianChat.enterRoom("123-456-abc");
     cristianChat.onLeaveRoom(eventHandler);
 
-    leaveRoom();
+    await leaveRoom();
 
     expect(eventHandler.mock.calls.length).toBe(1);
   });
@@ -197,20 +197,20 @@ describe("Events", () => {
     expect(eventHandler.mock.calls.length).toBe(1);
   });
 
-  test("Sending a message triggers the 'on-message' event", () => {
+  test("Sending a message triggers the 'on-message' event", async () => {
     const myChat = chat(chatUser1);
     const danielaChat = chat(chatUser2);
     const roomId = "123-456-abc";
     const messageEventHandler = jest.fn();
-    myChat.enterRoom(roomId);
-    danielaChat.enterRoom(roomId);
-    danielaChat.onMessage(messageEventHandler);
+    await myChat.enterRoom(roomId);
+    await danielaChat.enterRoom(roomId);
+    await danielaChat.onMessage(messageEventHandler);
 
     const message: ChatMessage = {
       content: "Hello world"
     };
 
-    myChat.sendMessage(message);
+    await myChat.sendMessage(message);
 
     expect(messageEventHandler.mock.calls.length).toBe(1);
   });
