@@ -1,17 +1,19 @@
 import { ChatMessage } from "../chat";
 import {
   localChat as chat,
-  clearRooms,
-  clearMessages,
-  getMessages,
-  usersInRoom
+  clearRooms as _clearRooms,
+  clearMessages as _clearMessages,
+  getMessages as _getMessages,
+  usersInRoom as _usersInRoom
 } from "../localChatDriver";
 
 const _test = () => {};
 
+// Underscore prefix means available only
+// for testing purposes
 afterEach(() => {
-  clearRooms();
-  clearMessages();
+  _clearRooms();
+  _clearMessages();
 });
 
 test("Creates a chat instance", () => {
@@ -50,7 +52,7 @@ test("Users can enter room", () => {
 
   expect(typeof leaveRoom1).toBe("function");
   expect(typeof leaveRoom2).toBe("function");
-  const users = usersInRoom("123-456-abc");
+  const users = _usersInRoom("123-456-abc");
 
   expect(users).toHaveLength(2);
   expect(users[0]).toEqual(user1);
@@ -68,7 +70,7 @@ test("The same user cannot enter a room twice", () => {
   myChat.enterRoom("123-456-abc");
   myChat.enterRoom("123-456-abc");
 
-  const users = usersInRoom("123-456-abc");
+  const users = _usersInRoom("123-456-abc");
   expect(users).toHaveLength(1);
 });
 
@@ -82,7 +84,7 @@ test("User can leave a room", () => {
 
   const leaveRoom1 = myChat.enterRoom("123-456-abc");
   leaveRoom1();
-  const users = usersInRoom("123-456-abc");
+  const users = _usersInRoom("123-456-abc");
   expect(users).toHaveLength(0);
 });
 
@@ -172,7 +174,7 @@ test("Users can send messages", () => {
   myChat.sendMessage(message);
   myChat.sendMessage(message);
 
-  expect(getMessages(roomId)).toHaveLength(2);
+  expect(_getMessages(roomId)).toHaveLength(2);
 });
 
 test("Sending a message triggers the message event", () => {
