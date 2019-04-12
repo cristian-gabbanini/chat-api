@@ -56,9 +56,9 @@ export type ChatMessage = {
   content: string;
 };
 
-type HasTimestamp = { ts: string };
+export type HasTimestamp = { ts: string };
 
-type ChatMessageSource = {
+export type ChatMessageSource = {
   user: User;
   room: Room;
 };

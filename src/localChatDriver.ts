@@ -1,14 +1,42 @@
-import { chat, User, Room, ChatEvent, ChatMessage } from "./chat";
+import {
+  chat,
+  User,
+  Room,
+  ChatEvent,
+  ChatMessage,
+  ChatMessageSource,
+  HasTimestamp
+} from "./chat";
+
+import uuid from "uuid";
 
 // --------------------------------------------------------------------------------------------
 // Demo usage
+type MessageId = string;
+type HasMessageId = { id: MessageId };
+
 const rooms: { [r: string]: User[] } = {};
 const listeners: ((event: ChatEvent) => void)[] = [];
-const messages: { [r: string]: ChatMessage[] } = {};
+const roomsMessages: { [roomId: string]: MessageId[] } = {};
+const messages: {
+  [messageId: string]: ChatMessage &
+    ChatMessageSource &
+    HasTimestamp &
+    HasMessageId;
+} = {};
 const permissions: { [r: string]: User[] } = {};
 
 function isDefined<T>(arg: T | undefined): arg is T {
   return typeof arg !== "undefined";
+}
+
+function addMessageId(
+  message: ChatMessage & ChatMessageSource & HasTimestamp
+): typeof message & HasMessageId {
+  return {
+    id: uuid(),
+    ...message
+  };
 }
 
 export const localChatDriver = (user: User) => {
@@ -57,10 +85,15 @@ export const localChatDriver = (user: User) => {
           break;
         case "on-message":
           if ("id" in enteredRoom) {
-            if (typeof messages[enteredRoom.id] === "undefined") {
-              messages[enteredRoom.id] = [];
+            if (typeof roomsMessages[enteredRoom.id] === "undefined") {
+              roomsMessages[enteredRoom.id] = [];
             }
-            messages[enteredRoom.id].push(e.content);
+
+            const messageWithId = addMessageId(e.content);
+
+            roomsMessages[enteredRoom.id].push(messageWithId.id);
+
+            messages[messageWithId.id] = messageWithId;
           }
           break;
       }
@@ -88,7 +121,8 @@ export function clearRooms() {
 }
 
 export function clearMessages() {
-  Object.keys(messages).map(roomId => delete messages[roomId]);
+  Object.keys(roomsMessages).forEach(roomId => delete roomsMessages[roomId]);
+  Object.keys(messages).forEach(messageId => delete messages[messageId]);
 }
 
 export function clearPermissions() {
@@ -96,7 +130,9 @@ export function clearPermissions() {
 }
 
 export function getMessages(roomId: string) {
-  return messages[roomId];
+  const messageIds = roomsMessages[roomId];
+  const res = messageIds.map(id => messages[id]);
+  return res;
 }
 
 export function allowUser(user: User, roomId: string) {
