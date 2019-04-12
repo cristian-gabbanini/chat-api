@@ -102,13 +102,7 @@ test("Entering a room triggers the 'enter-room' event", () => {
   };
   const cristianChat = chat(user1);
 
-  const eventHandler = jest.fn((user, room) => {
-    if (user.id === user1.id) {
-      console.log("I am online!");
-    } else {
-      console.log(`${user.firstName} ${user.lastName} is online!`);
-    }
-  });
+  const eventHandler = jest.fn((user, room) => {});
 
   cristianChat.onEnterRoom(eventHandler);
 
@@ -166,9 +160,7 @@ test("Users can send messages", () => {
   const leaveRoom1 = myChat.enterRoom(roomId);
   const message: ChatMessage = {
     type: "message",
-    content: "Hello world",
-    user: user1,
-    room: { id: roomId }
+    content: "Hello world"
   };
 
   myChat.sendMessage(message);
@@ -188,9 +180,7 @@ test("Sending a message before entering a room throws an error", () => {
 
   const message: ChatMessage = {
     type: "message",
-    content: "Hello world",
-    user: user1,
-    room: { id: roomId }
+    content: "Hello world"
   };
 
   expect(() => myChat.sendMessage(message)).toThrow(
