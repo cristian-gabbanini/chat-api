@@ -6,36 +6,38 @@ import {
   ChatMessage,
   ChatMessageSource,
   HasTimestamp,
-  MessageId,
-  HasMessageId
+  MessageId
 } from "./chat";
 
 import uuid from "uuid";
 
 // --------------------------------------------------------------------------------------------
 // Demo usage
-
+type HasId = {
+  id: string;
+};
 const rooms: { [r: string]: User[] } = {};
 const listeners: ((event: ChatEvent) => void)[] = [];
 const roomsMessages: { [roomId: string]: MessageId[] } = {};
 const messages: {
-  [messageId: string]: ChatMessage &
-    ChatMessageSource &
-    HasTimestamp &
-    HasMessageId;
+  [messageId: string]: ChatMessage & ChatMessageSource & HasTimestamp & HasId;
 } = {};
 const permissions: { [r: string]: User[] } = {};
-const events: { [eventId: string]: ChatEvent & HasMessageId } = {};
+const events: { [eventId: string]: ChatEvent & HasId } = {};
 
 function isDefined<T>(arg: T | undefined): arg is T {
   return typeof arg !== "undefined";
 }
 
-function addId<T extends object>(object: T): T & HasMessageId {
+function addId<T extends object>(object: T): T & HasId {
   return {
     id: uuid(),
     ...object
   };
+}
+
+function freeze<T extends object>(object: T): Readonly<T> {
+  return Object.freeze(object);
 }
 
 export const localChatDriver = (user: User) => {
@@ -90,7 +92,7 @@ export const localChatDriver = (user: User) => {
               roomsMessages[enteredRoom.id] = [];
             }
 
-            const messageWithId = addId(eventWithId.content);
+            const messageWithId = freeze(addId(eventWithId.content));
             eventWithId.content = messageWithId;
 
             roomsMessages[enteredRoom.id].push(messageWithId.id);
