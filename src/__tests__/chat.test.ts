@@ -84,7 +84,6 @@ test("Users can send messages", () => {
   const leaveRoom1 = myChat.enterRoom(roomId);
 
   const message: ChatMessage = {
-    type: "message",
     content: "Hello world"
   };
 
@@ -104,12 +103,10 @@ test("Users can receive messages from other users in the same room", async () =>
   danielaChat.enterRoom(roomId);
 
   const message: ChatMessage = {
-    type: "message",
     content: "Hello world"
   };
 
   const message2: ChatMessage = {
-    type: "message",
     content: "Hello world, again!"
   };
 
@@ -138,16 +135,16 @@ test("Users cannot receive messages from other rooms ", async () => {
   danielaChat.enterRoom(roomId2);
 
   const message: ChatMessage = {
-    type: "message",
     content: "Hello world"
   };
 
   const message2: ChatMessage = {
-    type: "message",
     content: "Hello world, again!"
   };
 
-  const cristianReceiver = jest.fn(message => {});
+  const cristianReceiver = jest.fn(message => {
+    console.log(message);
+  });
 
   cristianChat.onMessage(cristianReceiver);
 
@@ -206,7 +203,6 @@ describe("Events", () => {
     danielaChat.onMessage(messageEventHandler);
 
     const message: ChatMessage = {
-      type: "message",
       content: "Hello world"
     };
 
@@ -227,7 +223,6 @@ describe("Errors", () => {
     const roomId = "123-456-abc";
 
     const message: ChatMessage = {
-      type: "message",
       content: "Hello world"
     };
 

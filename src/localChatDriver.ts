@@ -5,15 +5,15 @@ import {
   ChatEvent,
   ChatMessage,
   ChatMessageSource,
-  HasTimestamp
+  HasTimestamp,
+  MessageId,
+  HasMessageId
 } from "./chat";
 
 import uuid from "uuid";
 
 // --------------------------------------------------------------------------------------------
 // Demo usage
-type MessageId = string;
-type HasMessageId = { id: MessageId };
 
 const rooms: { [r: string]: User[] } = {};
 const listeners: ((event: ChatEvent) => void)[] = [];
@@ -90,6 +90,7 @@ export const localChatDriver = (user: User) => {
             }
 
             const messageWithId = addMessageId(e.content);
+            e.content = messageWithId;
 
             roomsMessages[enteredRoom.id].push(messageWithId.id);
 

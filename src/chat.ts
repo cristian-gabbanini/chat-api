@@ -9,6 +9,9 @@ interface Connection {
   roomId?: string;
 }
 
+export type MessageId = string;
+export type HasMessageId = { id: MessageId };
+
 type MessageEvent = {
   ts: number;
   type: "on-message";
@@ -52,7 +55,6 @@ export type User = {
 };
 
 export type ChatMessage = {
-  type: "message";
   content: string;
 };
 
