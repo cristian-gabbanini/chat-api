@@ -43,8 +43,6 @@ test("Creates a chat instance", () => {
   const myChat = chat(chatUser1);
 
   expect(myChat).toHaveProperty("disconnect");
-  expect(myChat).toHaveProperty("sendMessage");
-  expect(myChat).toHaveProperty("onMessage");
   expect(myChat).toHaveProperty("onEnterRoom");
   expect(myChat).toHaveProperty("onLeaveRoom");
 });
@@ -53,8 +51,8 @@ test("Users can enter room", async () => {
   const myChat = chat(chatUser1);
   const myChat2 = chat(chatUser2);
 
-  const leaveRoom1 = await myChat.enterRoom("123-456-abc");
-  const leaveRoom2 = await myChat2.enterRoom("123-456-abc");
+  const [, , leaveRoom1] = await myChat.enterRoom("123-456-abc");
+  const [, , leaveRoom2] = await myChat2.enterRoom("123-456-abc");
 
   expect(typeof leaveRoom1).toBe("function");
   expect(typeof leaveRoom2).toBe("function");
@@ -78,7 +76,9 @@ test("The same user cannot enter a room twice", async () => {
 test("User can leave a room", async () => {
   const myChat = chat(chatUser1);
 
-  const leaveRoom1 = await myChat.enterRoom("123-456-abc");
+  const [sendMessage, onMessage, leaveRoom1] = await myChat.enterRoom(
+    "123-456-abc"
+  );
   await leaveRoom1();
   const users = _usersInRoom("123-456-abc");
   expect(users).toHaveLength(0);
@@ -87,14 +87,14 @@ test("User can leave a room", async () => {
 test("Users can send messages", async () => {
   const myChat = chat(chatUser1);
   const roomId = "123-456-abc";
-  const leaveRoom1 = await myChat.enterRoom(roomId);
+  const [sendMessage1, , leaveRoom1] = await myChat.enterRoom(roomId);
 
   const message: ChatMessage = {
     content: "Hello world"
   };
 
-  await myChat.sendMessage(message);
-  await myChat.sendMessage(message);
+  await sendMessage1(message);
+  await sendMessage1(message);
 
   expect(_getMessages(roomId)).toHaveLength(2);
 });
@@ -105,8 +105,8 @@ test("Users can receive messages from other users in the same room", async () =>
   const cristianChat = chat(chatUser1);
   const danielaChat = chat(chatUser2);
 
-  await cristianChat.enterRoom(roomId);
-  await danielaChat.enterRoom(roomId);
+  const [, onMessageCristian] = await cristianChat.enterRoom(roomId);
+  const [sendDaniela, onMessageDaniela] = await danielaChat.enterRoom(roomId);
 
   const message: ChatMessage = {
     content: "Hello world"
@@ -120,11 +120,11 @@ test("Users can receive messages from other users in the same room", async () =>
 
   const danielaReceiver = jest.fn(message => {});
 
-  cristianChat.onMessage(cristianReceiver);
-  danielaChat.onMessage(danielaReceiver);
+  onMessageCristian(cristianReceiver);
+  onMessageDaniela(danielaReceiver);
 
-  await danielaChat.sendMessage(message);
-  await danielaChat.sendMessage(message2);
+  await sendDaniela(message);
+  await sendDaniela(message2);
 
   expect(cristianReceiver.mock.calls.length).toBe(2);
   expect(danielaReceiver.mock.calls.length).toBe(0);
@@ -137,8 +137,8 @@ test("Users cannot receive messages from other rooms ", async () => {
   const danielaChat = chat(chatUser2);
 
   _allowUser(chatUser2, roomId2);
-  await cristianChat.enterRoom(roomId1);
-  await danielaChat.enterRoom(roomId2);
+  const [, onMessageCristian] = await cristianChat.enterRoom(roomId1);
+  const [sendDaniela] = await danielaChat.enterRoom(roomId2);
 
   const message: ChatMessage = {
     content: "Hello world"
@@ -150,10 +150,10 @@ test("Users cannot receive messages from other rooms ", async () => {
 
   const cristianReceiver = jest.fn(message => {});
 
-  cristianChat.onMessage(cristianReceiver);
+  onMessageCristian(cristianReceiver);
 
-  await danielaChat.sendMessage(message);
-  await danielaChat.sendMessage(message2);
+  await sendDaniela(message);
+  await sendDaniela(message2);
 
   expect(cristianReceiver.mock.calls.length).toBe(0);
 });
@@ -176,7 +176,7 @@ describe("Events", () => {
 
     const eventHandler = jest.fn((user, room) => {});
 
-    const leaveRoom = await cristianChat.enterRoom("123-456-abc");
+    const [, , leaveRoom] = await cristianChat.enterRoom("123-456-abc");
     cristianChat.onLeaveRoom(eventHandler);
 
     await leaveRoom();
@@ -202,15 +202,16 @@ describe("Events", () => {
     const danielaChat = chat(chatUser2);
     const roomId = "123-456-abc";
     const messageEventHandler = jest.fn();
-    await myChat.enterRoom(roomId);
-    await danielaChat.enterRoom(roomId);
-    await danielaChat.onMessage(messageEventHandler);
+    const [sendCristian] = await myChat.enterRoom(roomId);
+    const [, onMessageDaniela] = await danielaChat.enterRoom(roomId);
+
+    onMessageDaniela(messageEventHandler);
 
     const message: ChatMessage = {
       content: "Hello world"
     };
 
-    await myChat.sendMessage(message);
+    await sendCristian(message);
 
     expect(messageEventHandler.mock.calls.length).toBe(1);
   });
@@ -225,27 +226,5 @@ describe("Errors", () => {
       expect(error).toBeInstanceOf(Error);
       console.log(error);
     }
-  });
-
-  test("Sending a message before entering a room throws an error", () => {
-    const myChat = chat(chatUser1);
-
-    const message: ChatMessage = {
-      content: "Hello world"
-    };
-
-    expect(() => myChat.sendMessage(message)).toThrow(
-      "You must enter a room before you can send a message"
-    );
-  });
-
-  test("Listening to messages before entering a room throws an error ", async () => {
-    const cristianChat = chat(chatUser1);
-
-    const cristianReceiver = jest.fn(message => {});
-
-    expect(() => cristianChat.onMessage(cristianReceiver)).toThrow(
-      "You must enter a room before you can send a message"
-    );
   });
 });
