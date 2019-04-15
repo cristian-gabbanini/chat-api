@@ -34,20 +34,20 @@ export type MessageId = string;
 export type HasMessageId = { id: MessageId };
 
 type MessageEvent = {
-  ts: number;
+  ts: string;
   type: "on-message";
   content: ChatMessage & ChatMessageSource & HasTimestamp;
 };
 
 type UserEnterRoomEvent = {
-  ts: number;
+  ts: string;
   type: "enter-room";
   user: User;
   room: Room;
 };
 
 type UserLeaveRoomEvent = {
-  ts: number;
+  ts: string;
   type: "leave-room";
   user: User;
   room: Room;

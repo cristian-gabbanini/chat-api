@@ -1,5 +1,5 @@
-import { chat, ChatMessage, ChatEvent, User } from "../chat";
-import { isUndefined } from "util";
+import { chat, ChatMessage } from "../chat";
+import { mockDriver } from "../mocks/chatDriver";
 
 const _test = () => {};
 
@@ -17,91 +17,9 @@ const chatUser2 = {
   lastName: "Bulgarelli"
 };
 
-const mockDriver = (
-  failEvents: string[] = [],
-  allowedRooms: { [roomId: string]: string[] } = {}
-) => {
-  interface Listener {
-    (event: ChatEvent): void;
-  }
-  const listeners: Listener[] = [];
-  const rooms: { [roomId: string]: string[] } = {};
-  return function chat(user: User) {
-    var o = {
-      connect: () => Promise.resolve(true),
-      disconnect: () => {
-        const [roomId] = Object.keys(rooms)
-          .filter(roomId =>
-            rooms[roomId].indexOf(user.id) >= 0 ? roomId : undefined
-          )
-          .filter(isDefined);
-        o.trigger({
-          type: "leave-room",
-          user,
-          room: { id: roomId }
-        });
-      },
-      listen: (fn: (event: ChatEvent) => void) => {
-        listeners.push(fn);
-        return Promise.resolve(true);
-      },
-      trigger: async (e: ChatEvent) => {
-        switch (e.type) {
-          case "enter-room":
-            if (eventShoudFail(e, failEvents)) {
-              throw Error("Cannot enter room");
-            }
-            if (!isAllowedRoom(e.user, e.room.id)) {
-              throw Error("Room not allowed");
-            }
-            if (!isDefined(rooms[e.room.id])) {
-              rooms[e.room.id] = [];
-            }
-            rooms[e.room.id].push(e.user.id);
-            break;
-          case "leave-room":
-            if (eventShoudFail(e, failEvents)) {
-              throw Error(`Cannot leave room ${e.room.id}`);
-            }
-            break;
-          case "on-message":
-            if (eventShoudFail(e, failEvents)) {
-              throw Error("Cannot send message");
-            }
-            break;
-        }
-
-        listeners.forEach(listener => listener(e));
-        return true;
-      },
-      user
-    };
-    return o;
-  };
-
-  function eventShoudFail(event: ChatEvent, events: string[]) {
-    return events.filter(eventType => eventType === event.type).length === 1;
-  }
-
-  function isAllowedRoom(u: User, roomId: string) {
-    const room = allowedRooms[roomId];
-    if (room) {
-      return (
-        room.filter(userId => (u.id === userId ? true : false)).length === 1
-      );
-    }
-    return false;
-  }
-
-  function isDefined<T>(value: T | undefined): value is T {
-    return typeof value !== "undefined";
-  }
-};
-
 test("Creates a chat instance", () => {
   const chatService = chat.bind(null, mockDriver());
   const { disconnect, driver } = chatService(chatUser1);
-
   expect(typeof disconnect).toBe("function");
   expect(driver).toHaveProperty("connect");
   expect(driver).toHaveProperty("disconnect");
@@ -111,7 +29,8 @@ test("Creates a chat instance", () => {
 
 test("Users can enter room", async () => {
   const allowedRooms = { "123-456-abc": [chatUser1.id, chatUser2.id] };
-  const chatService = chat.bind(null, mockDriver([], allowedRooms));
+  const eventsToFail: string[] = [];
+  const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const myChat = chatService(chatUser1);
   const myChat2 = chatService(chatUser2);
   const { leaveRoom } = await myChat.enterRoom("123-456-abc");
@@ -121,30 +40,27 @@ test("Users can enter room", async () => {
 });
 
 test("The same user cannot enter a room twice", async () => {
-  const chatService = chat.bind(
-    null,
-    mockDriver([], { "123-456-abc": [chatUser1.id, chatUser2.id] })
-  );
+  const allowedRooms = { "123-456-abc": [chatUser1.id] };
+  const eventsToFail: string[] = [];
+  const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const myChat = chatService(chatUser1);
   await myChat.enterRoom("123-456-abc");
   await myChat.enterRoom("123-456-abc");
 });
 
 test("User can leave a room", async () => {
-  const chatService = chat.bind(
-    null,
-    mockDriver([], { "123-456-abc": [chatUser1.id, chatUser2.id] })
-  );
+  const allowedRooms = { "123-456-abc": [chatUser1.id] };
+  const eventsToFail: string[] = [];
+  const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const myChat = chatService(chatUser1);
   const { leaveRoom } = await myChat.enterRoom("123-456-abc");
   await leaveRoom();
 });
 
 test("Users can send messages", async () => {
-  const chatService = chat.bind(
-    null,
-    mockDriver([], { "123-456-abc": [chatUser1.id, chatUser2.id] })
-  );
+  const allowedRooms = { "123-456-abc": [chatUser1.id] };
+  const eventsToFail: string[] = [];
+  const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const myChat = chatService(chatUser1);
   const roomId = "123-456-abc";
   const { sendMessage } = await myChat.enterRoom(roomId);
@@ -156,10 +72,9 @@ test("Users can send messages", async () => {
 });
 
 test("Users can receive messages from other users in the same room", async () => {
-  const chatService = chat.bind(
-    null,
-    mockDriver([], { "123-456-abc": [chatUser1.id, chatUser2.id] })
-  );
+  const allowedRooms = { "123-456-abc": [chatUser1.id, chatUser2.id] };
+  const eventsToFail: string[] = [];
+  const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const roomId = "123-456-abc";
   const cristianChat = chatService(chatUser1);
   const danielaChat = chatService(chatUser2);
@@ -185,13 +100,12 @@ test("Users can receive messages from other users in the same room", async () =>
 });
 
 test("Users cannot receive messages from other rooms ", async () => {
-  const chatService = chat.bind(
-    null,
-    mockDriver([], {
-      "123-456-abc": [chatUser1.id],
-      "123-991-abb": [chatUser2.id]
-    })
-  );
+  const allowedRooms = {
+    "123-456-abc": [chatUser1.id],
+    "123-991-abb": [chatUser2.id]
+  };
+  const eventsToFail: string[] = [];
+  const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const roomId1 = "123-456-abc";
   const roomId2 = "123-991-abb";
   const cristianChat = chatService(chatUser1);
@@ -218,7 +132,8 @@ test("Users can enter multiple rooms if allowed", async () => {
     "123-456-abc": [chatUser1.id],
     "555-456-abc": [chatUser1.id]
   };
-  const chatService = chat.bind(null, mockDriver([], allowedRooms));
+  const eventsToFail: string[] = [];
+  const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const room1 = "123-456-abc";
   const room2 = "555-456-abc";
   await expect(
@@ -232,8 +147,9 @@ test("Users can enter multiple rooms if allowed", async () => {
 describe("Events", () => {
   test("Entering a room triggers the 'enter-room' event", async () => {
     const roomId = "123-456-abc";
+    const eventsToFail: string[] = [];
     const allowedRooms = { [roomId]: [chatUser1.id, chatUser2.id] };
-    const chatService = chat.bind(null, mockDriver([], allowedRooms));
+    const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
     const cristianChat = chatService(chatUser1);
     const eventHandler = jest.fn((user, room) => {});
     const { onEnterRoom } = await cristianChat.enterRoom(roomId);
@@ -245,8 +161,9 @@ describe("Events", () => {
 
   test("Leaving a room triggers the 'leave-room' event", async () => {
     const roomId = "123-456-abc";
+    const eventsToFail: string[] = [];
     const allowedRooms = { [roomId]: [chatUser1.id] };
-    const chatService = chat.bind(null, mockDriver([], allowedRooms));
+    const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
     const cristianChat = chatService(chatUser1);
     const eventHandler = jest.fn((user, room) => {});
     const { onLeaveRoom, leaveRoom } = await cristianChat.enterRoom(roomId);
@@ -257,8 +174,9 @@ describe("Events", () => {
 
   test("Disconnecting triggers the 'leave-room' event", async () => {
     const roomId = "123-456-abc";
+    const eventsToFail: string[] = [];
     const allowedRooms = { [roomId]: [chatUser1.id] };
-    const chatService = chat.bind(null, mockDriver([], allowedRooms));
+    const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
     const cristianChat = chatService(chatUser1);
     const eventHandler = jest.fn((user, room) => {});
     const { onLeaveRoom } = await cristianChat.enterRoom(roomId);
@@ -270,7 +188,8 @@ describe("Events", () => {
   test("Sending a message triggers the 'on-message' event", async () => {
     const roomId = "123-456-abc";
     const allowedRooms = { [roomId]: [chatUser1.id, chatUser2.id] };
-    const chatService = chat.bind(null, mockDriver([], allowedRooms));
+    const eventsToFail: string[] = [];
+    const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
     const myChat = chatService(chatUser1);
     const danielaChat = chatService(chatUser2);
     const message: ChatMessage = {
@@ -295,7 +214,8 @@ describe("Events", () => {
 describe("Errors", async () => {
   test("If send message fails an error is thrown", async () => {
     const allowedRooms = { "123-456-abc": [chatUser1.id] };
-    const chatService = chat.bind(null, mockDriver(["on-enter"], allowedRooms));
+    const eventsToFail = ["on-enter"];
+    const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
     const cristianChat = chatService(chatUser1);
     try {
       const { sendMessage } = await cristianChat.enterRoom("123-456-abc");
@@ -307,7 +227,8 @@ describe("Errors", async () => {
 
   test("If the driver connection fails an error is thrown", async () => {
     const allowedRooms = { "123-456-abc": [chatUser1.id] };
-    const chatService = chat.bind(null, mockDriver(["on-enter"], allowedRooms));
+    const eventsToFail = ["on-enter"];
+    const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
     const cristianChat = chatService(chatUser1);
     try {
       await cristianChat.enterRoom("123-456-abc");
@@ -318,7 +239,8 @@ describe("Errors", async () => {
 
   test("Entering a room which the user is not allowed to enter throws an error", async () => {
     const allowedRooms = {};
-    const chatService = chat.bind(null, mockDriver([], allowedRooms));
+    const eventsToFail: string[] = [];
+    const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
     const cristianChat = chatService(chatUser1);
     await expect(cristianChat.enterRoom("123-456-abc")).rejects.toBeInstanceOf(
       Error
