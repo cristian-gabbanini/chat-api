@@ -1,8 +1,8 @@
-import { ChatEvent, User } from "../chat";
+import { ChatEvent, User } from '../chat';
 
 export const mockDriver = (
   failEvents: string[] = [],
-  allowedRooms: { [roomId: string]: string[] } = {}
+  allowedRooms: { [roomId: string]: string[] } = {},
 ) => {
   interface Listener {
     (event: ChatEvent): void;
@@ -15,14 +15,14 @@ export const mockDriver = (
       disconnect: () => {
         const [roomId] = Object.keys(rooms)
           .filter(roomId =>
-            rooms[roomId].indexOf(user.id) >= 0 ? roomId : undefined
+            rooms[roomId].indexOf(user.id) >= 0 ? roomId : undefined,
           )
           .filter(isDefined);
         o.trigger({
           ts: new Date().toISOString(),
-          type: "leave-room",
+          type: 'leave-room',
           user,
-          room: { id: roomId }
+          room: { id: roomId },
         });
       },
       listen: (fn: (event: ChatEvent) => void) => {
@@ -31,26 +31,26 @@ export const mockDriver = (
       },
       trigger: async (e: ChatEvent) => {
         switch (e.type) {
-          case "enter-room":
+          case 'enter-room':
             if (eventShoudFail(e, failEvents)) {
-              throw Error("Cannot enter room");
+              throw Error('Cannot enter room');
             }
             if (!isAllowedRoom(e.user, e.room.id)) {
-              throw Error("Room not allowed");
+              throw Error('Room not allowed');
             }
             if (!isDefined(rooms[e.room.id])) {
               rooms[e.room.id] = [];
             }
             rooms[e.room.id].push(e.user.id);
             break;
-          case "leave-room":
+          case 'leave-room':
             if (eventShoudFail(e, failEvents)) {
               throw Error(`Cannot leave room ${e.room.id}`);
             }
             break;
-          case "on-message":
+          case 'on-message':
             if (eventShoudFail(e, failEvents)) {
-              throw Error("Cannot send message");
+              throw Error('Cannot send message');
             }
             break;
         }
@@ -58,7 +58,7 @@ export const mockDriver = (
         listeners.forEach(listener => listener(e));
         return true;
       },
-      user
+      user,
     };
     return o;
   };
@@ -78,6 +78,6 @@ export const mockDriver = (
   }
 
   function isDefined<T>(value: T | undefined): value is T {
-    return typeof value !== "undefined";
+    return typeof value !== 'undefined';
   }
 };

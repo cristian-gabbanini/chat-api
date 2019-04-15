@@ -8,7 +8,9 @@
     "build": "parcel build index.html"
   },
   "dependencies": {
+    "@types/pretty-format": "20.0.1",
     "@types/uuid": "3.4.4",
+    "pretty-format": "24.7.0",
     "uuid": "3.3.2"
   },
   "devDependencies": {
