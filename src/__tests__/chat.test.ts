@@ -137,6 +137,15 @@ test("Users cannot receive messages from other rooms ", async () => {
   expect(cristianReceiver.mock.calls.length).toBe(0);
 });
 
+test("Users can enter multiple rooms", async () => {
+  const room1 = "123-456-abc";
+  const room2 = "555-456-abc";
+  _allowUser(chatUser1, room1);
+  _allowUser(chatUser1, room2);
+  await expect(chat(chatUser1).enterRoom(room1)).resolves;
+  await expect(chat(chatUser1).enterRoom(room2)).resolves;
+});
+
 describe("Events", () => {
   test("Entering a room triggers the 'enter-room' event", async () => {
     const cristianChat = chat(chatUser1);
