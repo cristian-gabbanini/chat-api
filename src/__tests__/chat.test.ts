@@ -55,41 +55,44 @@ test('Creates a chat instance', () => {
 });
 
 test('Users can enter rooms', async () => {
-  const allowedRooms = { '123-456-abc': [chatUser1.id, chatUser2.id] };
+  const roomId = '123-456-abc';
+  const allowedRooms = { [roomId]: [chatUser1.id, chatUser2.id] };
   const eventsToFail: string[] = [];
   const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const myChat = chatService(chatUser1);
   const myChat2 = chatService(chatUser2);
-  const { leaveRoom } = await myChat.enterRoom('123-456-abc');
-  const { leaveRoom: leaveRoom2 } = await myChat2.enterRoom('123-456-abc');
+  const { leaveRoom } = await myChat.enterRoom(roomId);
+  const { leaveRoom: leaveRoom2 } = await myChat2.enterRoom(roomId);
   expect(typeof leaveRoom).toBe('function');
   expect(typeof leaveRoom2).toBe('function');
 });
 
 test('The same user cannot enter a room twice', async () => {
-  const allowedRooms = { '123-456-abc': [chatUser1.id] };
+  const roomId = '123-456-abc';
+  const allowedRooms = { [roomId]: [chatUser1.id] };
   const eventsToFail: string[] = [];
   const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const myChat = chatService(chatUser1);
-  await myChat.enterRoom('123-456-abc');
-  await myChat.enterRoom('123-456-abc');
+  await myChat.enterRoom(roomId);
+  await myChat.enterRoom(roomId);
 });
 
 test('Users can leave the chatrooms', async () => {
-  const allowedRooms = { '123-456-abc': [chatUser1.id] };
+  const roomId = '123-456-abc';
+  const allowedRooms = { [roomId]: [chatUser1.id] };
   const eventsToFail: string[] = [];
   const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const myChat = chatService(chatUser1);
-  const { leaveRoom } = await myChat.enterRoom('123-456-abc');
+  const { leaveRoom } = await myChat.enterRoom(roomId);
   await leaveRoom();
 });
 
 test('Users can send messages', async () => {
-  const allowedRooms = { '123-456-abc': [chatUser1.id] };
+  const roomId = '123-456-abc';
+  const allowedRooms = { [roomId]: [chatUser1.id] };
   const eventsToFail: string[] = [];
   const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
   const myChat = chatService(chatUser1);
-  const roomId = '123-456-abc';
   const { sendMessage } = await myChat.enterRoom(roomId);
   const message: ChatMessage = {
     content: 'Hello world',
@@ -99,10 +102,10 @@ test('Users can send messages', async () => {
 });
 
 test('Users can receive messages from other users in the same room', async () => {
-  const allowedRooms = { '123-456-abc': [chatUser1.id, chatUser2.id] };
+  const roomId = '123-456-abc';
+  const allowedRooms = { [roomId]: [chatUser1.id, chatUser2.id] };
   const eventsToFail: string[] = [];
   const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
-  const roomId = '123-456-abc';
   const cristianChat = chatService(chatUser1);
   const danielaChat = chatService(chatUser2);
   const { onMessage: onMessageCristian } = await cristianChat.enterRoom(roomId);
@@ -127,14 +130,14 @@ test('Users can receive messages from other users in the same room', async () =>
 });
 
 test('Users cannot receive messages from users inside other rooms ', async () => {
+  const roomId1 = '123-456-abc';
+  const roomId2 = '123-991-abb';
   const allowedRooms = {
-    '123-456-abc': [chatUser1.id],
-    '123-991-abb': [chatUser2.id],
+    [roomId1]: [chatUser1.id],
+    [roomId2]: [chatUser2.id],
   };
   const eventsToFail: string[] = [];
   const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
-  const roomId1 = '123-456-abc';
-  const roomId2 = '123-991-abb';
   const cristianChat = chatService(chatUser1);
   const danielaChat = chatService(chatUser2);
   const { onMessage: onMessageCristian } = await cristianChat.enterRoom(
@@ -154,7 +157,7 @@ test('Users cannot receive messages from users inside other rooms ', async () =>
   expect(cristianReceiver.mock.calls.length).toBe(0);
 });
 
-test.only('Users can enter multiple rooms if allowed', async () => {
+test('Users can enter multiple rooms if allowed', async () => {
   const room1 = '123-456-abc';
   const room2 = '555-456-abc';
   const room3 = '555-111-zzz';
