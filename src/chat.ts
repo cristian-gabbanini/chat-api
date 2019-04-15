@@ -1,3 +1,5 @@
+import { isUndefined } from 'util';
+
 interface Connection {
   enterRoom: (roomId: string) => Promise<ChatRoom>;
   disconnect: () => void;
@@ -88,11 +90,23 @@ export type ChatMessageSource = {
 function isString<T>(arg: T | null): arg is T {
   return typeof arg === 'string';
 }
+function isDefined<T>(arg: T | undefined): arg is T {
+  return typeof arg !== 'undefined';
+}
 
 export function chat(driver: ChatDriver, user: User): Connection {
   const ENTER_ROOM_ERROR =
     'You must enter a room before you can send a message or listen to incoming messages';
+  const USER_UNDEFINED_ERROR = 'You must define a user';
+  const DRIVER_UNDEFINED_ERROR = 'You must define a driver';
   const boundDriver = driver(user);
+
+  if (!isDefined(driver)) {
+    throw Error(DRIVER_UNDEFINED_ERROR);
+  }
+  if (!isDefined(user)) {
+    throw Error(USER_UNDEFINED_ERROR);
+  }
 
   function enterRoom(
     this: ReturnType<ChatDriver>,
@@ -100,7 +114,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
   ): Promise<ChatRoom> {
     return new Promise((res, rej) => {
       const enter: UserEnterRoomEvent = {
-        ts: Date.now(),
+        ts: new Date().toISOString(),
         type: 'enter-room',
         room: { id: roomId },
         user,
@@ -110,7 +124,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
         .then(_ => {
           const leaveRoom = () =>
             this.trigger({
-              ts: Date.now(),
+              ts: new Date().toISOString(),
               type: 'leave-room',
               room: { id: roomId },
               user,

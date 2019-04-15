@@ -54,6 +54,12 @@ test('Creates a chat instance', () => {
   expect(typeof driver.trigger).toBe('function');
 });
 
+test('If no user is provided throws an error', () => {
+  const chatService = chat.bind(null, mockDriver());
+  // @ts-ignore
+  expect(() => chatService()).toThrow();
+});
+
 test('Users can enter rooms', async () => {
   const allowedRooms = { '123-456-abc': [chatUser1.id, chatUser2.id] };
   const eventsToFail: string[] = [];
@@ -154,7 +160,7 @@ test('Users cannot receive messages from users inside other rooms ', async () =>
   expect(cristianReceiver.mock.calls.length).toBe(0);
 });
 
-test.only('Users can enter multiple rooms if allowed', async () => {
+test('Users can enter multiple rooms if allowed', async () => {
   const room1 = '123-456-abc';
   const room2 = '555-456-abc';
   const room3 = '555-111-zzz';
