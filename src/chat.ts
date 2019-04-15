@@ -127,7 +127,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
     });
   }
 
-  function sendMessage(
+  async function sendMessage(
     this: ReturnType<ChatDriver>,
     roomId: string,
     message: ChatMessage
@@ -143,13 +143,13 @@ export function chat(driver: ChatDriver, user: User): Connection {
       room: { id: roomId }
     };
 
-    this.trigger({
+    await this.trigger({
       ts: Date.now(),
       type: "on-message",
       content: messageEvent
     });
 
-    return Promise.resolve(true);
+    return true;
   }
 
   function onMessage(
