@@ -1,9 +1,23 @@
 interface Connection {
-  enterRoom: (roomId: string) => Promise<[sendMessage, onMessage, leaveRoom]>;
-  onEnterRoom(fn: (user: User, room: Room) => void): void;
-  onLeaveRoom(fn: (user: User, room: Room) => void): void;
+  enterRoom: (roomId: string) => Promise<ChatRoom>;
   disconnect: () => void;
   driver: ReturnType<ChatDriver>;
+}
+
+interface ChatRoom {
+  sendMessage: sendMessage;
+  onEnterRoom: onEnterRoom;
+  onLeaveRoom: onLeaveRoom;
+  onMessage: onMessage;
+  leaveRoom: leaveRoom;
+}
+
+interface onEnterRoom {
+  (fn: (user: User, room: Room) => void): void;
+}
+
+interface onLeaveRoom {
+  (fn: (user: User, room: Room) => void): void;
 }
 
 interface sendMessage {
@@ -83,7 +97,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
   function enterRoom(
     this: ReturnType<ChatDriver>,
     roomId: string
-  ): Promise<[sendMessage, onMessage, leaveRoom]> {
+  ): Promise<ChatRoom> {
     return new Promise((res, rej) => {
       const enter: UserEnterRoomEvent = {
         ts: Date.now(),
@@ -101,11 +115,13 @@ export function chat(driver: ChatDriver, user: User): Connection {
               room: { id: roomId },
               user
             });
-          res([
-            sendMessage.bind(this, roomId),
-            onMessage.bind(this, roomId),
-            leaveRoom
-          ]);
+          res({
+            sendMessage: sendMessage.bind(this, roomId),
+            onMessage: onMessage.bind(this, roomId),
+            leaveRoom,
+            onEnterRoom: onEnterRoom.bind(this),
+            onLeaveRoom: onLeaveRoom.bind(this)
+          });
         })
         .catch(rej);
     });
@@ -187,8 +203,6 @@ export function chat(driver: ChatDriver, user: User): Connection {
   const conn: Connection = {
     enterRoom: enterRoom.bind(boundDriver),
     disconnect: disconnect.bind(boundDriver),
-    onEnterRoom: onEnterRoom.bind(boundDriver),
-    onLeaveRoom: onLeaveRoom.bind(boundDriver),
     driver: boundDriver
   };
 
