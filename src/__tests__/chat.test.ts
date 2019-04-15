@@ -137,7 +137,7 @@ test("Users cannot receive messages from other rooms ", async () => {
   expect(cristianReceiver.mock.calls.length).toBe(0);
 });
 
-test("Users can enter multiple rooms", async () => {
+test("Users can enter multiple rooms if allowed", async () => {
   const room1 = "123-456-abc";
   const room2 = "555-456-abc";
   _allowUser(chatUser1, room1);
@@ -154,7 +154,7 @@ describe("Events", () => {
     onEnterRoom(eventHandler);
     const danielaChat = chat(chatUser2);
     await danielaChat.enterRoom("123-456-abc");
-    expect(eventHandler.mock.calls.length).toBe(1);
+    expect(eventHandler).toHaveBeenCalledTimes(1);
   });
 
   test("Leaving a room triggers the 'leave-room' event", async () => {
@@ -165,7 +165,7 @@ describe("Events", () => {
     );
     onLeaveRoom(eventHandler);
     await leaveRoom();
-    expect(eventHandler.mock.calls.length).toBe(1);
+    expect(eventHandler).toHaveBeenCalledTimes(1);
   });
 
   test("Disconnecting triggers the 'leave-room' event", async () => {
@@ -174,7 +174,7 @@ describe("Events", () => {
     const { onLeaveRoom } = await cristianChat.enterRoom("123-456-abc");
     onLeaveRoom(eventHandler);
     cristianChat.disconnect();
-    expect(eventHandler.mock.calls.length).toBe(1);
+    expect(eventHandler).toHaveBeenCalledTimes(1);
   });
 
   test("Sending a message triggers the 'on-message' event", async () => {
@@ -188,18 +188,25 @@ describe("Events", () => {
     const message: ChatMessage = {
       content: "Hello world"
     };
+    const expectedMessage = {
+      ...message,
+      room: { id: roomId },
+      user: chatUser1,
+      id: expect.any(String),
+      ts: expect.any(String)
+    };
     await sendCristian(message);
-    expect(messageEventHandler.mock.calls.length).toBe(1);
+    expect(messageEventHandler).toHaveBeenCalledTimes(1);
+    expect(messageEventHandler).toHaveBeenCalledWith(expectedMessage);
   });
 });
 
-describe("Errors", () => {
+describe("Errors", async () => {
   test("Entering a room which the user is not allowed to enter throws an error", async () => {
     const cristianChat = chat(chatUser1);
-    try {
-      await cristianChat.enterRoom("111-111-111");
-    } catch (error) {
-      expect(error).toBeInstanceOf(Error);
-    }
+    _allowUser(chatUser1, "123-456-abc");
+
+    await expect(chat(chatUser1).enterRoom("123-456-abc")).toBeTruthy();
+    //await expect(cristianChat.enterRoom("111-111-111")).rejects.toThrow();
   });
 });
