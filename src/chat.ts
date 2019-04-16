@@ -107,43 +107,35 @@ export function chat(driver: ChatDriver, user: User): Connection {
     throw Error(DRIVER_UNDEFINED_ERROR);
   }
 
-  const boundDriver = driver(user);
-
   if (!isDefined(user)) {
     throw Error(USER_UNDEFINED_ERROR);
   }
 
-  function enterRoom(
-    this: ReturnType<ChatDriver>,
-    roomId: string
-  ): Promise<ChatRoom> {
-    return new Promise((res, rej) => {
-      const enter: UserEnterRoomEvent = {
-        ts: getTimestamp(),
-        type: 'enter-room',
+  const boundDriver = driver(user);
+
+  async function enterRoom(this: ReturnType<ChatDriver>, roomId: string) {
+    const enter: UserEnterRoomEvent = {
+      ts: getTimestamp(),
+      type: 'enter-room',
+      room: { id: roomId },
+      user,
+    };
+    const entered = await this.trigger(enter);
+    const leaveRoom = () =>
+      this.trigger({
+        ts: new Date().toISOString(),
+        type: 'leave-room',
         room: { id: roomId },
         user,
-      };
-
-      this.trigger(enter)
-        .then(_ => {
-          const leaveRoom = () =>
-            this.trigger({
-              ts: new Date().toISOString(),
-              type: 'leave-room',
-              room: { id: roomId },
-              user,
-            });
-          res({
-            sendMessage: sendMessage.bind(this, roomId),
-            onMessage: onMessage.bind(this, roomId),
-            leaveRoom,
-            onEnterRoom: onEnterRoom.bind(this),
-            onLeaveRoom: onLeaveRoom.bind(this, roomId),
-          });
-        })
-        .catch(rej);
-    });
+      });
+    const chatRoom: ChatRoom = {
+      sendMessage: sendMessage.bind(this, roomId),
+      onMessage: onMessage.bind(this, roomId),
+      leaveRoom,
+      onEnterRoom: onEnterRoom.bind(this),
+      onLeaveRoom: onLeaveRoom.bind(this, roomId),
+    };
+    return chatRoom;
   }
 
   async function sendMessage(
