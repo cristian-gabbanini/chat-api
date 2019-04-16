@@ -30,6 +30,23 @@ test('Creates a chat instance', () => {
   expect(typeof driver.trigger).toBe('function');
 });
 
+test('Users can enter a room only if allowed', async () => {
+  const roomId = '123-456-abc';
+  const allowedRooms = { [roomId]: [chatUser2.id] };
+  const eventsToFail: string[] = [];
+  const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
+  const user1Chat = chatService(chatUser1);
+  const user2Chat = chatService(chatUser2);
+  try {
+    await user1Chat.enterRoom(roomId);
+  } catch (e) {
+    expect(e).toBeInstanceOf(Error);
+    expect(e.message).toBe('Room not allowed');
+  }
+  const room = await user2Chat.enterRoom(roomId);
+  expect(room).toBeAChatRoom();
+});
+
 test('Users can enter rooms', async () => {
   const allowedRooms = { '123-456-abc': [chatUser1.id, chatUser2.id] };
   const eventsToFail: string[] = [];
@@ -174,7 +191,7 @@ describe('Events', () => {
     expect(eventHandler).toHaveBeenCalledTimes(1);
   });
 
-  test("The 'leave-room' event fires only for the rooms in which the user is", async () => {
+  test("The 'leave-room' event fires only for the rooms which the user is in", async () => {
     const room1Id = '123-456-abc';
     const room2Id = '444-456-xzy';
     const eventsToFail: string[] = [];
