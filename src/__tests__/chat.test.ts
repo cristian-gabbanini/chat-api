@@ -174,6 +174,33 @@ describe('Events', () => {
     expect(eventHandler).toHaveBeenCalledTimes(1);
   });
 
+  test.only("The 'leave-room' event fires only for the rooms in which the user is", async () => {
+    const room1Id = '123-456-abc';
+    const room2Id = '444-456-xzy';
+    const eventsToFail: string[] = [];
+    const allowedRooms = {
+      [room1Id]: [chatUser1.id],
+      [room2Id]: [chatUser1.id, chatUser2.id],
+    };
+    const chatService = chat.bind(null, mockDriver(eventsToFail, allowedRooms));
+    const user1Chat = chatService(chatUser1);
+    const user2Chat = chatService(chatUser2);
+    const leaveHandlerRoom1 = jest.fn((user, room) => {});
+    const leaveHandlerRoom2 = jest.fn((user, room) => {});
+    const { onLeaveRoom: user1OnLeaveRoom } = await user1Chat.enterRoom(
+      room1Id
+    );
+    const { onLeaveRoom: user1OnLeaveRoom2 } = await user1Chat.enterRoom(
+      room2Id
+    );
+    const { leaveRoom: user2LeaveRoom } = await user2Chat.enterRoom(room2Id);
+    user1OnLeaveRoom(leaveHandlerRoom1);
+    user1OnLeaveRoom2(leaveHandlerRoom2);
+    await user2LeaveRoom();
+    expect(leaveHandlerRoom1).not.toHaveBeenCalled();
+    expect(leaveHandlerRoom2).toHaveBeenCalledTimes(1);
+  });
+
   test("Disconnecting triggers the 'leave-room' event", async () => {
     const roomId = '123-456-abc';
     const eventsToFail: string[] = [];
@@ -216,6 +243,7 @@ describe('Events', () => {
 describe('Errors', async () => {
   test('If no driver is provided throws an error', () => {
     // @ts-ignore
+
     expect(() => chat()).toThrow();
   });
 

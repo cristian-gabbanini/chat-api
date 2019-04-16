@@ -119,7 +119,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
   ): Promise<ChatRoom> {
     return new Promise((res, rej) => {
       const enter: UserEnterRoomEvent = {
-        ts: new Date().toISOString(),
+        ts: getTimestamp(),
         type: 'enter-room',
         room: { id: roomId },
         user,
@@ -139,7 +139,7 @@ export function chat(driver: ChatDriver, user: User): Connection {
             onMessage: onMessage.bind(this, roomId),
             leaveRoom,
             onEnterRoom: onEnterRoom.bind(this),
-            onLeaveRoom: onLeaveRoom.bind(this),
+            onLeaveRoom: onLeaveRoom.bind(this, roomId),
           });
         })
         .catch(rej);
@@ -156,14 +156,14 @@ export function chat(driver: ChatDriver, user: User): Connection {
     }
 
     const messageEvent: ChatMessage & ChatMessageSource & HasTimestamp = {
-      ts: new Date().toISOString(),
+      ts: getTimestamp(),
       ...message,
       user,
       room: { id: roomId },
     };
 
     await this.trigger({
-      ts: Date.now(),
+      ts: getTimestamp(),
       type: 'on-message',
       content: messageEvent,
     });
@@ -205,18 +205,25 @@ export function chat(driver: ChatDriver, user: User): Connection {
 
   function onLeaveRoom(
     this: ReturnType<ChatDriver>,
+    roomId: string,
     fn: (user: User, room: Room) => void
   ): void {
     this.listen(event => {
       if (event.type === 'leave-room') {
         const { user, room } = event;
-        fn(user, room);
+        if (room.id === roomId) {
+          fn(user, room);
+        }
       }
     });
   }
 
   function disconnect(this: ReturnType<ChatDriver>) {
     this.disconnect();
+  }
+
+  function getTimestamp() {
+    return new Date().toISOString();
   }
 
   const conn: Connection = {
