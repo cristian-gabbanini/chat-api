@@ -174,7 +174,7 @@ describe('Events', () => {
     expect(eventHandler).toHaveBeenCalledTimes(1);
   });
 
-  test.only("The 'leave-room' event fires only for the rooms in which the user is", async () => {
+  test("The 'leave-room' event fires only for the rooms in which the user is", async () => {
     const room1Id = '123-456-abc';
     const room2Id = '444-456-xzy';
     const eventsToFail: string[] = [];
