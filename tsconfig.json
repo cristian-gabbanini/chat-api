@@ -17,6 +17,7 @@
     "strictNullChecks": true,
     "strictBindCallApply": true,
     "rootDir": "src",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "declaration": true
   }
 }

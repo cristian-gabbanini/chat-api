@@ -2,30 +2,6 @@ import { chat, ChatMessage, ChatRoom } from '../chat';
 import { mockDriver } from '../__mocks__/chatDriver';
 import prettyFormat from 'pretty-format';
 
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toBeAChatRoom: () => CustomMatcherResult;
-    }
-  }
-}
-
-expect.extend({
-  toBeAChatRoom(actual: ChatRoom) {
-    const pass =
-      typeof actual === 'object' &&
-      typeof actual.sendMessage === 'function' &&
-      typeof actual.leaveRoom === 'function' &&
-      typeof actual.onMessage === 'function' &&
-      typeof actual.onEnterRoom === 'function' &&
-      typeof actual.onLeaveRoom === 'function';
-    return {
-      message: () => `expected ${prettyFormat(actual)} to be a ChatRoom`,
-      pass,
-    };
-  },
-});
-
 // Underscore prefix means available only
 // for testing purposes
 const chatUser1 = {
@@ -283,4 +259,31 @@ describe('Errors', async () => {
       Error
     );
   });
+});
+
+// ---------------------------------------------------------------------------
+// Tests end here
+// ---------------------------------------------------------------------------
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toBeAChatRoom: () => CustomMatcherResult;
+    }
+  }
+}
+
+expect.extend({
+  toBeAChatRoom(actual: ChatRoom) {
+    const pass =
+      typeof actual === 'object' &&
+      typeof actual.sendMessage === 'function' &&
+      typeof actual.leaveRoom === 'function' &&
+      typeof actual.onMessage === 'function' &&
+      typeof actual.onEnterRoom === 'function' &&
+      typeof actual.onLeaveRoom === 'function';
+    return {
+      message: () => `expected ${prettyFormat(actual)} to be a ChatRoom`,
+      pass,
+    };
+  },
 });
