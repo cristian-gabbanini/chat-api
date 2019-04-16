@@ -54,12 +54,6 @@ test('Creates a chat instance', () => {
   expect(typeof driver.trigger).toBe('function');
 });
 
-test('If no user is provided throws an error', () => {
-  const chatService = chat.bind(null, mockDriver());
-  // @ts-ignore
-  expect(() => chatService()).toThrow();
-});
-
 test('Users can enter rooms', async () => {
   const allowedRooms = { '123-456-abc': [chatUser1.id, chatUser2.id] };
   const eventsToFail: string[] = [];
@@ -244,6 +238,17 @@ describe('Events', () => {
 });
 
 describe('Errors', async () => {
+  test('If no driver is provided throws an error', () => {
+    // @ts-ignore
+    expect(() => chat()).toThrow();
+  });
+
+  test('If no user is provided throws an error', () => {
+    const chatService = chat.bind(null, mockDriver());
+    // @ts-ignore
+    expect(() => chatService()).toThrow();
+  });
+
   test('If send message fails an error is thrown', async () => {
     const allowedRooms = { '123-456-abc': [chatUser1.id] };
     const eventsToFail = ['on-enter'];

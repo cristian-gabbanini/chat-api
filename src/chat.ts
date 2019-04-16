@@ -1,5 +1,3 @@
-import { isUndefined } from 'util';
-
 interface Connection {
   enterRoom: (roomId: string) => Promise<ChatRoom>;
   disconnect: () => void;
@@ -94,16 +92,23 @@ function isDefined<T>(arg: T | undefined): arg is T {
   return typeof arg !== 'undefined';
 }
 
+function isFunction<T>(arg: T): arg is T {
+  return typeof arg === 'function';
+}
+
 export function chat(driver: ChatDriver, user: User): Connection {
   const ENTER_ROOM_ERROR =
     'You must enter a room before you can send a message or listen to incoming messages';
   const USER_UNDEFINED_ERROR = 'You must define a user';
-  const DRIVER_UNDEFINED_ERROR = 'You must define a driver';
-  const boundDriver = driver(user);
+  const DRIVER_UNDEFINED_ERROR =
+    'You must define a driver which should be a function accepting a user as its first argument';
 
-  if (!isDefined(driver)) {
+  if (!isDefined(driver) || !isFunction(driver)) {
     throw Error(DRIVER_UNDEFINED_ERROR);
   }
+
+  const boundDriver = driver(user);
+
   if (!isDefined(user)) {
     throw Error(USER_UNDEFINED_ERROR);
   }
