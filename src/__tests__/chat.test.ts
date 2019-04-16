@@ -1,9 +1,7 @@
-import { chat, ChatMessage, ChatRoom } from '../chat';
+import { chat, ChatMessage, ChatRoom, ChatDriver } from '../chat';
 import { mockDriver } from '../__mocks__/chatDriver';
 import prettyFormat from 'pretty-format';
 
-// Underscore prefix means available only
-// for testing purposes
 const chatUser1 = {
   id: '123-32323',
   firstName: 'Cristian',
@@ -20,14 +18,7 @@ test('Creates a chat instance', () => {
   const chatService = chat.bind(null, mockDriver());
   const { disconnect, driver } = chatService(chatUser1);
   expect(typeof disconnect).toBe('function');
-  expect(driver).toHaveProperty('connect');
-  expect(typeof driver.connect).toBe('function');
-  expect(driver).toHaveProperty('disconnect');
-  expect(typeof driver.disconnect).toBe('function');
-  expect(driver).toHaveProperty('listen');
-  expect(typeof driver.listen).toBe('function');
-  expect(driver).toHaveProperty('trigger');
-  expect(typeof driver.trigger).toBe('function');
+  expect(driver).toBeAChatDriver();
 });
 
 test('Users can enter a room only if allowed', async () => {
@@ -313,6 +304,7 @@ declare global {
   namespace jest {
     interface Matchers<R> {
       toBeAChatRoom: () => CustomMatcherResult;
+      toBeAChatDriver: () => CustomMatcherResult;
     }
   }
 }
@@ -328,6 +320,18 @@ expect.extend({
       typeof actual.onLeaveRoom === 'function';
     return {
       message: () => `expected ${prettyFormat(actual)} to be a ChatRoom`,
+      pass,
+    };
+  },
+  toBeAChatDriver(actual: ReturnType<ChatDriver>) {
+    const pass =
+      typeof actual === 'object' &&
+      typeof actual.connect === 'function' &&
+      typeof actual.disconnect === 'function' &&
+      typeof actual.trigger === 'function' &&
+      typeof actual.listen === 'function';
+    return {
+      message: () => `expected ${prettyFormat(actual)} to be a ChatDriver`,
       pass,
     };
   },
