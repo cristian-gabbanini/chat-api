@@ -1,3 +1,4 @@
+import { wait } from '../__helpers__/helpers';
 import { __WebSocket } from '../__mocks__/WebSocket';
 
 declare global {
@@ -9,12 +10,6 @@ declare global {
 beforeEach(() => {
   window.WebSocket = __WebSocket;
 });
-
-function wait(ms: number) {
-  return new Promise(res => {
-    setTimeout(() => res(true), ms);
-  });
-}
 
 test('Creates a mock WebSocket', () => {
   const socket = new WebSocket('http://chat.somehost.org', 'json');
@@ -30,6 +25,6 @@ test('Triggers the onopen event', async () => {
   const socket = new WebSocket('http://chat.somehost.org', 'json');
   const onOpenHandler = jest.fn();
   socket.onopen(onOpenHandler);
-  await wait(20);
+  await wait();
   expect(onOpenHandler).toHaveBeenCalledTimes(1);
 });

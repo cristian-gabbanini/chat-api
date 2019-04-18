@@ -1,3 +1,5 @@
+import { delay } from '../__helpers__/helpers';
+
 export function __WebSocket(url: string, protocol: string) {
   const onOpen: Function[] = [];
   const socket = {
@@ -11,13 +13,12 @@ export function __WebSocket(url: string, protocol: string) {
     protocol,
   };
 
-  setTimeout(() => {
+  delay(() => {
     const e: Event = {
       type: 'ONOPEN',
       state: 'READY',
     };
     onOpen.forEach(listener => listener(e));
-  }, 15);
-
+  });
   return socket;
 }
